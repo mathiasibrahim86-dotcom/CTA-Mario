@@ -1,0 +1,2882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>CTA Mario</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Cormorant+Garamond:ital,wght@0,500;1,500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --gold:#ffcf3f;
+    --red:#e8412c;
+    --dark:#161a2b;
+    --panel:#1f2540;
+    --accent:#4fd3c4;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none;}
+  html,body{
+    margin:0; padding:0; width:100%; height:100%;
+    background:#000; overflow:hidden; touch-action:none;
+    font-family:'Trebuchet MS', Verdana, sans-serif;
+  }
+  #gameContainer{
+    position:fixed; inset:0; width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    background:#000;
+  }
+  canvas{
+    display:block;
+    image-rendering:pixelated;
+    background:linear-gradient(to bottom, #1a7fa8 0%, #4fa8d9 25%, #7fd8ff 45%, #b8e8ff 65%, #a8d95c 100%);
+    touch-action:none;
+  }
+
+  /* ---- Overlay screens ---- */
+  .screen{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    background:radial-gradient(circle at 50% 30%, #26305a 0%, var(--dark) 70%);
+    color:#fff; text-align:center; z-index:20;
+    padding:16px;
+  }
+  .hidden{display:none !important;}
+
+  #mainMenu{
+    background:linear-gradient(180deg, rgba(10,13,28,.32) 0%, rgba(10,13,28,.68) 55%, var(--dark) 100%);
+    backdrop-filter:blur(1.5px);
+  }
+
+  .logo{
+    font-size:clamp(28px,7vw,54px);
+    font-weight:900;
+    color:var(--gold);
+    -webkit-text-stroke:2px #7a3e00;
+    text-shadow:0 6px 0 #7a3e00, 0 10px 14px rgba(0,0,0,.5);
+    letter-spacing:1px;
+    margin-bottom:4px;
+    animation: floatLogo 3.2s ease-in-out infinite;
+  }
+  @keyframes floatLogo{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-7px); } }
+  @keyframes shineSweep{ 0%{ background-position:-200% 0; } 100%{ background-position:200% 0; } }
+  .subtitle{ color:var(--accent); font-size:clamp(11px,2.2vw,15px); margin-bottom:22px; letter-spacing:2px;}
+
+  .btn{
+    background:linear-gradient(#ff6a4d,var(--red));
+    border:none; border-bottom:5px solid #9c2415;
+    color:#fff; font-weight:800; font-size:clamp(14px,2.6vw,19px);
+    padding:12px 30px; border-radius:14px; margin:7px;
+    min-width:220px; cursor:pointer;
+    box-shadow:0 4px 10px rgba(0,0,0,.4);
+    letter-spacing:1px;
+  }
+  .btn:active{ transform:translateY(3px); border-bottom-width:2px; }
+  .btn.secondary{ background:linear-gradient(#3a4570,#232a4d); border-bottom-color:#10132a; }
+  .btn.gold{ background:linear-gradient(#ffe27a,var(--gold)); border-bottom-color:#a9740a; color:#5c3b00; }
+
+  .menuBox{ display:flex; flex-direction:column; align-items:center; }
+
+  /* ---- Creator credit logo — top-central of the welcome (main menu) screen ONLY ---- */
+  #mainMenu{ padding-top:6px; }
+  .creatorBadge{
+    position:relative; z-index:26; flex-shrink:0;
+    display:flex; flex-direction:column; align-items:center;
+    text-align:center; max-width:220px;
+    margin:0 auto 6px;
+  }
+  .creatorBadge img{
+    max-width:52px; max-height:52px; object-fit:contain; border-radius:50%;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.5));
+  }
+  .creatorBadge .credit{
+    margin-top:1px;
+    text-shadow:0 2px 6px rgba(0,0,0,.85), 0 0 2px rgba(0,0,0,.6);
+  }
+  .creatorBadge .credit .role{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic; font-weight:500;
+    font-size:9px; letter-spacing:1.3px; text-transform:uppercase;
+    color:var(--accent);
+  }
+  .creatorBadge .credit .name{
+    font-family:'Great Vibes', cursive;
+    font-size:19px; line-height:1.05;
+    color:var(--gold);
+    margin:0;
+  }
+  .creatorBadge .credit .tagline{
+    font-family:'Cormorant Garamond', serif;
+    font-style:italic; font-weight:500;
+    font-size:10px; color:#fff;
+    opacity:.9;
+  }
+  .creatorBadge .credit .email{
+    font-family:'Cormorant Garamond', serif;
+    font-size:9px; letter-spacing:.4px;
+    color:var(--accent); margin-top:0;
+  }
+
+  .worldGrid, .levelGrid{
+    display:flex; gap:14px; flex-wrap:wrap; justify-content:center; max-width:640px; margin:14px 0 20px;
+  }
+  .worldCard, .levelCard{
+    width:118px; height:92px; border-radius:12px;
+    background:var(--panel); border:3px solid #333c66;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    color:#fff; font-weight:700; font-size:13px; cursor:pointer; position:relative;
+  }
+  .worldCard.locked, .levelCard.locked{ opacity:.4; }
+  .worldCard .icon{ font-size:26px; margin-bottom:4px;}
+  .levelCard .stars{ font-size:12px; color:var(--gold); margin-top:3px; }
+
+  .topBar{ position:absolute; top:12px; left:12px; display:flex; gap:10px; z-index:25;}
+  .iconBtn{
+    width:44px; height:44px; border-radius:50%;
+    background:rgba(20,24,45,.75); border:2px solid rgba(255,255,255,.25);
+    color:#fff; font-size:20px; display:flex; align-items:center; justify-content:center;
+    cursor:pointer;
+  }
+
+  /* ---- HUD ---- */
+  #hud{
+    position:absolute; top:0; left:0; right:0; padding:10px 14px;
+    display:flex; justify-content:space-between; align-items:flex-start;
+    z-index:15; pointer-events:none; font-weight:800; color:#fff;
+    text-shadow:0 2px 3px rgba(0,0,0,.6);
+    font-size:clamp(12px,2.4vw,16px);
+  }
+  #hud .hudLeft, #hud .hudRight{ display:flex; flex-direction:column; gap:4px; }
+  #hearts span{ margin-right:2px; }
+  .hudChip{
+    background:rgba(15,18,35,.55); border-radius:10px; padding:4px 10px;
+    display:inline-block; backdrop-filter:blur(2px);
+  }
+  #pauseBtn{ pointer-events:all; }
+
+  /* ---- Touch Controls ---- */
+  #controls{ position:absolute; inset:0; z-index:15; pointer-events:none; }
+  .pad{
+    position:absolute; bottom:18px; display:flex; gap:12px; pointer-events:all;
+  }
+  #actions{ right:16px; align-items:flex-end; }
+  .ctrlBtn{
+    width:64px; height:64px; border-radius:50%;
+    background:rgba(255,255,255,.16); border:2px solid rgba(255,255,255,.5);
+    display:flex; align-items:center; justify-content:center;
+    font-size:26px; color:#fff; font-weight:900;
+    -webkit-user-select:none; user-select:none; touch-action:none;
+    transition: all 0.1s ease-out;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2);
+    cursor: pointer;
+  }
+  .ctrlBtn.active{ 
+    background:rgba(255,255,255,.48); 
+    transform: scale(0.93);
+    box-shadow: inset 0 2px 6px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
+  }
+  .ctrlBtn:active{
+    transform: scale(0.93);
+  }
+  #jumpBtn{ width:78px; height:78px; font-size:14px; }
+  #actionBtn{ width:64px; height:64px; font-size:13px; background:rgba(255,207,63,.28); border-color:rgba(255,207,63,.7); }
+
+  /* Circular steering-wheel style direction control — a round rim with a
+     center hub, and four round tap-zones sitting on the rim at N/E/S/W.
+     Kept translucent so the scene stays visible underneath. */
+  .dpadCross{
+    position:absolute; left:14px; bottom:14px; pointer-events:all;
+    width:136px; height:136px; border-radius:50%;
+    background:radial-gradient(circle at 50% 42%, rgba(255,255,255,.07) 0%, rgba(255,255,255,.02) 55%, rgba(0,0,0,.18) 100%);
+    border:3px solid rgba(255,255,255,.24);
+    box-shadow: inset 0 0 0 5px rgba(255,255,255,.05), 0 2px 10px rgba(0,0,0,.28);
+  }
+  .dpadCross::after{
+    /* steering-wheel center hub, decorative only */
+    content:""; position:absolute; left:50%; top:50%; width:36px; height:36px;
+    transform:translate(-50%,-50%); border-radius:50%;
+    background:rgba(255,255,255,.09); border:2px solid rgba(255,255,255,.28);
+    pointer-events:none;
+  }
+  .dpadBtn{
+    position:absolute; width:48px; height:48px; border-radius:50%; font-size:16px;
+    background:rgba(255,255,255,.10) !important;
+    border:2px solid rgba(255,255,255,.30) !important;
+    transition: all 0.08s ease-out;
+    cursor: pointer;
+  }
+  .dpadBtn.active{ 
+    background:rgba(255,255,255,.38) !important;
+    transform: scale(0.91);
+  }
+  .dpadBtn:active{
+    transform: scale(0.91);
+  }
+  #upBtn{ top:-6px; left:50%; margin-left:-24px; }
+  #downBtn{ bottom:-6px; left:50%; margin-left:-24px; }
+  #leftBtn{ left:-6px; top:50%; margin-top:-24px; }
+  #rightBtn{ right:-6px; top:50%; margin-top:-24px; }
+
+  /* Analog-stick direction control: a draggable knob you can push in any
+     direction (like a real joystick), instead of four fixed tap-zones. */
+  .dpadCross{ touch-action:none; }
+  .dpadArrow{
+    position:absolute; width:20px; height:20px; display:flex;
+    align-items:center; justify-content:center; font-size:13px;
+    color:rgba(255,255,255,.35); pointer-events:none;
+    transition:color .1s, transform .1s;
+  }
+  #dpadArrowUp{ top:6px; left:50%; margin-left:-10px; }
+  #dpadArrowDown{ bottom:6px; left:50%; margin-left:-10px; }
+  #dpadArrowLeft{ left:6px; top:50%; margin-top:-10px; }
+  #dpadArrowRight{ right:6px; top:50%; margin-top:-10px; }
+  .dpadArrow.active{ color:rgba(255,207,63,.95); transform:scale(1.3); }
+  .dpadKnob{
+    position:absolute; left:50%; top:50%; width:54px; height:54px;
+    margin-left:-27px; margin-top:-27px; border-radius:50%;
+    background:radial-gradient(circle at 35% 32%, rgba(255,255,255,.55), rgba(255,255,255,.14) 60%, rgba(255,255,255,.08) 100%);
+    border:2px solid rgba(255,255,255,.55);
+    box-shadow:0 3px 8px rgba(0,0,0,.35), inset 0 1px 3px rgba(255,255,255,.4);
+    touch-action:none; cursor:pointer; will-change:transform;
+  }
+  .dpadKnob.dragging{
+    background:radial-gradient(circle at 35% 32%, rgba(255,207,63,.9), rgba(255,207,63,.35) 60%, rgba(255,255,255,.12) 100%);
+    border-color:rgba(255,207,63,.9);
+  }
+
+  .toast{
+    position:absolute; left:50%; top:22%; transform:translate(-50%,-50%) scale(.8);
+    background:rgba(15,18,35,.8); color:var(--gold); font-weight:900;
+    padding:10px 22px; border-radius:12px; font-size:clamp(16px,3vw,22px);
+    z-index:30; opacity:0; transition:opacity .25s, transform .25s; pointer-events:none;
+    letter-spacing:1px;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%,-50%) scale(1); }
+
+  .statLine{ font-size:clamp(14px,2.6vw,18px); margin:4px 0; color:#cfd6ff; }
+  .rotateWarn{
+    position:fixed; inset:0; background:#0a0d1c; color:#fff; z-index:100;
+    display:none; align-items:center; justify-content:center; flex-direction:column; text-align:center; padding:20px;
+  }
+  @media (orientation:portrait) and (max-width:900px){
+    .rotateWarn{ display:flex; }
+  }
+</style>
+</head>
+<body>
+
+<div class="rotateWarn">
+  <div style="font-size:44px;">📱↻</div>
+  <div style="font-weight:800; font-size:18px; margin-top:10px;">Rotate your phone</div>
+  <div style="opacity:.7; font-size:13px; margin-top:6px;">CTA Mario plays best in landscape</div>
+</div>
+
+<div id="gameContainer">
+  <canvas id="game" width="960" height="540"></canvas>
+
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div class="hudLeft">
+      <div class="hudChip" id="hearts"></div>
+      <div class="hudChip">Score: <span id="scoreVal">0</span></div>
+      <div class="hudChip" id="comboDisplay" style="color:#FFD700; font-weight:bold; display:none;"><span id="comboVal">🔥 COMBO</span></div>
+    </div>
+    <div class="hudRight" style="align-items:flex-end;">
+      <div class="hudChip">⏱ <span id="timeVal">0</span></div>
+      <div class="hudChip">🪙 <span id="coinVal">0</span></div>
+      <div class="hudChip">⭐ Points: <span id="pointsVal">0</span></div>
+    </div>
+  </div>
+  <div class="topBar hidden" id="pauseBarWrap">
+    <div class="iconBtn" id="pauseBtn">❚❚</div>
+  </div>
+
+  <!-- Touch controls -->
+  <div id="controls" class="hidden">
+    <div class="dpadCross" id="dpad">
+      <div class="dpadArrow" id="dpadArrowUp">▲</div>
+      <div class="dpadArrow" id="dpadArrowDown">▼</div>
+      <div class="dpadArrow" id="dpadArrowLeft">◀</div>
+      <div class="dpadArrow" id="dpadArrowRight">▶</div>
+      <div class="dpadKnob" id="dpadKnob"></div>
+    </div>
+    <div class="pad" id="actions">
+      <div class="ctrlBtn" id="actionBtn">ACT</div>
+      <div class="ctrlBtn" id="jumpBtn">JUMP</div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <!-- Background music: one looping tag per stage.
+       sound1 = Level 1-1, sound2 = Level 1-2, sound3 = Level 1-3,
+       sound4 = Level 1-4 (boss), sound5 = menus / world select.
+       Drop your own files named sound1.mp3 ... sound5.mp3 in the same
+       folder as this HTML file (or edit the src="" values below). -->
+  <audio id="sound1" src="sound1.mp3" loop preload="auto"></audio>
+  <audio id="sound2" src="sound2.mp3" loop preload="auto"></audio>
+  <audio id="sound3" src="sound3.mp3" loop preload="auto"></audio>
+  <audio id="sound4" src="sound4.mp3" loop preload="auto"></audio>
+  <audio id="sound5" src="sound5.mp3" loop preload="auto"></audio>
+
+  <!-- Main Menu -->
+  <div class="screen" id="mainMenu">
+    <div class="creatorBadge">
+      <img src="creator.jpeg" alt="Creator logo">
+      <div class="credit">
+        <div class="role">Code designer</div>
+        <div class="name">CTA Benson Friya Tech</div>
+        <div class="tagline">turning ideas into code</div>
+        <div class="email">dblocksysytem@gmail.com</div>
+      </div>
+    </div>
+    <div class="logo">CTA MARIO</div>
+    <div class="subtitle">A CTA CRYSTAL ADVENTURE</div>
+    <div class="menuBox">
+      <button class="btn" id="startBtn">▶ START GAME</button>
+      <button class="btn secondary" id="worldSelectBtn">🗺 WORLD SELECT</button>
+      <button class="btn secondary" id="settingsBtn">⚙ SETTINGS</button>
+      <button class="btn secondary" id="highScoreBtn">🏆 HIGH SCORES</button>
+    </div>
+  </div>
+
+  <!-- World Select -->
+  <div class="screen hidden" id="worldSelect">
+    <div class="logo" style="font-size:26px;">WORLD SELECT</div>
+    <div class="worldGrid" id="worldGrid"></div>
+    <button class="btn secondary" id="worldBackBtn">← Back</button>
+  </div>
+
+  <!-- Level Select -->
+  <div class="screen hidden" id="levelSelect">
+    <div class="logo" style="font-size:24px;" id="levelSelectTitle">GREEN VALLEY</div>
+    <div class="levelGrid" id="levelGrid"></div>
+    <button class="btn secondary" id="levelBackBtn">← Back</button>
+  </div>
+
+  <!-- Settings -->
+  <div class="screen hidden" id="settingsScreen">
+    <div class="logo" style="font-size:26px;">SETTINGS</div>
+    <div class="menuBox">
+      <button class="btn secondary" id="soundToggleBtn">🔊 Sound: ON</button>
+      <button class="btn secondary" id="resetBtn">🗑 Reset Progress</button>
+      <button class="btn" id="settingsBackBtn">← Back</button>
+    </div>
+  </div>
+
+  <!-- High Scores -->
+  <div class="screen hidden" id="highScoreScreen">
+    <div class="logo" style="font-size:26px;">HIGH SCORES</div>
+    <div class="statLine">Best Score: <span id="hsScore">0</span></div>
+    <div class="statLine">Levels Completed: <span id="hsLevels">0</span></div>
+    <button class="btn" id="hsBackBtn">← Back</button>
+  </div>
+
+  <!-- Pause Menu -->
+  <div class="screen hidden" id="pauseMenu" style="background:rgba(10,13,28,.85);">
+    <div class="logo" style="font-size:26px;">PAUSED</div>
+    <div class="menuBox">
+      <button class="btn" id="resumeBtn">▶ Resume</button>
+      <button class="btn secondary" id="restartBtn">↺ Restart Level</button>
+      <button class="btn secondary" id="pauseSettingsBtn">⚙ Settings</button>
+      <button class="btn secondary" id="pauseMenuBtn">🏠 Main Menu</button>
+    </div>
+  </div>
+
+  <!-- Level Complete -->
+  <div class="screen hidden" id="levelCompleteScreen">
+    <div class="logo" style="font-size:28px; color:var(--accent); -webkit-text-stroke:2px #0a5a4f;">LEVEL COMPLETE!</div>
+    <div class="statLine">Score: <span id="lcScore">0</span></div>
+    <div class="statLine">Coins Collected: <span id="lcCoins">0</span></div>
+    <div class="statLine">Time: <span id="lcTime">0</span>s</div>
+    <div class="menuBox" style="margin-top:14px;">
+      <button class="btn gold" id="nextLevelBtn">NEXT LEVEL ▶</button>
+      <button class="btn secondary" id="lcMenuBtn">🏠 Main Menu</button>
+    </div>
+  </div>
+
+  <!-- Game Over -->
+  <div class="screen hidden" id="gameOverScreen">
+    <div class="logo" style="font-size:30px; color:var(--red);">GAME OVER</div>
+    <div class="statLine">Final Score: <span id="goScore">0</span></div>
+    <div class="menuBox" style="margin-top:14px;">
+      <button class="btn" id="tryAgainBtn">↺ TRY AGAIN</button>
+      <button class="btn secondary" id="goMenuBtn">🏠 Main Menu</button>
+    </div>
+  </div>
+
+  <!-- Victory -->
+  <div class="screen hidden" id="victoryScreen">
+    <div class="logo" style="font-size:30px;">🏆 VICTORY!</div>
+    <div class="statLine">CTA Mario has recovered the Crystal!</div>
+    <div class="statLine">Final Score: <span id="vScore">0</span></div>
+    <button class="btn gold" id="vMenuBtn" style="margin-top:14px;">🏠 Main Menu</button>
+  </div>
+
+</div>
+
+<script>
+/* =========================================================
+   CTA MARIO — offline mobile 2D platformer
+   HTML5 Canvas + vanilla JS. All art is drawn procedurally
+   (no external image/audio files) so the whole game is a
+   single self-contained page that works with no internet
+   connection once loaded.
+   ========================================================= */
+
+(() => {
+"use strict";
+
+/* ---------------- Canvas / scaling ---------------- */
+const canvas = document.getElementById("game");
+const ctx = canvas.getContext("2d");
+const VW = 960, VH = 540; // virtual resolution
+
+function fitCanvas(){
+  const wrap = document.getElementById("gameContainer");
+  const scale = Math.min(wrap.clientWidth / VW, wrap.clientHeight / VH);
+  canvas.style.width = (VW*scale)+"px";
+  canvas.style.height = (VH*scale)+"px";
+}
+window.addEventListener("resize", fitCanvas);
+window.addEventListener("orientationchange", ()=>setTimeout(fitCanvas,200));
+fitCanvas();
+
+/* ---------------- Save system (localStorage) ---------------- */
+const SAVE_KEY = "ctaMarioSave_v1";
+function loadSave(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { unlocked:{"1-1":true}, completed:{}, highScore:0, soundOn:true };
+}
+let save = loadSave();
+function persist(){
+  try{ localStorage.setItem(SAVE_KEY, JSON.stringify(save)); }catch(e){}
+}
+
+/* ---------------- Simple WebAudio SFX (synthesized, no files) ---------------- */
+let actx = null;
+function ac(){ if(!actx) actx = new (window.AudioContext||window.webkitAudioContext)(); return actx; }
+function beep(freq, dur, type="square", vol=0.18, slideTo=null){
+  if(!save.soundOn) return;
+  try{
+    const a = ac();
+    const osc = a.createOscillator();
+    const gain = a.createGain();
+    osc.type = type;
+    osc.frequency.setValueAtTime(freq, a.currentTime);
+    if(slideTo) osc.frequency.exponentialRampToValueAtTime(slideTo, a.currentTime+dur);
+    gain.gain.setValueAtTime(vol, a.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, a.currentTime+dur);
+    osc.connect(gain); gain.connect(a.destination);
+    osc.start(); osc.stop(a.currentTime+dur);
+  }catch(e){}
+}
+const SFX = {
+  jump: ()=>beep(440,0.14,"square",0.15,720),
+  coin: ()=>beep(880,0.10,"square",0.12,1320),
+  crystal: ()=>beep(660,0.22,"triangle",0.16,1320),
+  hurt: ()=>beep(180,0.22,"sawtooth",0.18,80),
+  power: ()=>beep(330,0.30,"triangle",0.16,880),
+  enemyDown: ()=>beep(220,0.16,"square",0.15,60),
+  checkpoint: ()=>beep(520,0.14,"sine",0.14,780),
+  levelComplete: ()=>{ beep(523,0.14,"triangle",0.18,660); setTimeout(()=>beep(659,0.14,"triangle",0.18,880),140); setTimeout(()=>beep(880,0.24,"triangle",0.2,1046),280); },
+  gameOver: ()=>{ beep(220,0.3,"sawtooth",0.2,80); },
+  select: ()=>beep(500,0.06,"square",0.1)
+};
+
+/* ---------------- Looping stage music (your own audio files) ----------------
+   Each stage plays its own looping <audio> tag: sound1..sound5 (see the
+   <audio> tags near the top of the body). Nothing plays until a browser
+   user-gesture unlocks audio (the Start/menu buttons do this). */
+const MUSIC_TRACKS = { menu:"sound5" };
+for(let w=1; w<=20; w++){
+  MUSIC_TRACKS[`${w}-1`] = "sound1";
+  MUSIC_TRACKS[`${w}-2`] = "sound2";
+  MUSIC_TRACKS[`${w}-3`] = "sound3";
+  MUSIC_TRACKS[`${w}-4`] = "sound4";
+}
+let currentTrackEl = null;
+function trackFor(key){
+  const id = MUSIC_TRACKS[key] || MUSIC_TRACKS["1-1"];
+  return document.getElementById(id);
+}
+function startMusic(key, restart){
+  const el = trackFor(key || state.level || "menu");
+  if(!el) return;
+  if(currentTrackEl && currentTrackEl !== el){
+    currentTrackEl.pause();
+    currentTrackEl.currentTime = 0;
+  }
+  currentTrackEl = el;
+  if(restart) el.currentTime = 0;
+  el.loop = true;
+  el.muted = !save.soundOn;
+  if(save.soundOn) el.play().catch(()=>{ /* file missing or blocked until user interacts */ });
+}
+function stopMusic(){
+  if(currentTrackEl) currentTrackEl.pause();
+}
+
+/* ---------------- Screen management ---------------- */
+const screens = {};
+["mainMenu","worldSelect","levelSelect","settingsScreen","highScoreScreen",
+ "pauseMenu","levelCompleteScreen","gameOverScreen","victoryScreen"].forEach(id=>{
+  screens[id] = document.getElementById(id);
+});
+function showScreen(id){
+  Object.values(screens).forEach(s=>s.classList.add("hidden"));
+  if(id) screens[id].classList.remove("hidden");
+}
+const hud = document.getElementById("hud");
+const controlsEl = document.getElementById("controls");
+const pauseBarWrap = document.getElementById("pauseBarWrap");
+function setPlayingUI(on){
+  hud.classList.toggle("hidden", !on);
+  controlsEl.classList.toggle("hidden", !on);
+  pauseBarWrap.classList.toggle("hidden", !on);
+}
+
+function toast(msg){
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.classList.add("show");
+  clearTimeout(toast._h);
+  toast._h = setTimeout(()=>t.classList.remove("show"), 1100);
+}
+
+/* ---------------- World / Level data ---------------- */
+/* 20 worlds, each a distinct scene with 4 levels (Path / Hazard / Challenge / Guardian boss).
+   Difficulty rises steadily world-to-world and level-to-level within a world — see
+   buildScaledLevel() below for how speed/HP/length scale with world+level index. */
+const WORLD_DEFS = [
+  {name:"Green Valley",        icon:"🌳", levels:["Training Valley","Coin Hills","Moving Platforms","Dark Claw's Gate"]},
+  {name:"Crystal Cave",        icon:"💎", levels:["Crystal Tunnels","Falling Rocks","Hidden Chambers","Cave Guardian"]},
+  {name:"Desert Storm",        icon:"🏜", levels:["Sand Paths","Cactus Hazards","Wind Sections","Desert Fortress"]},
+  {name:"Sky Kingdom",         icon:"☁️", levels:["Cloud Platforms","Flying Enemies","Vertical Challenge","Sky Fortress"]},
+  {name:"Dark Fortress",       icon:"🏰", levels:["Traps","Strong Enemies","Locked Areas","Final Boss: Dark Claw Ultimate"]},
+  {name:"Frozen Peaks",        icon:"❄️", levels:["Icy Slopes","Frozen Lake","Blizzard Pass","Glacier Guardian"]},
+  {name:"Volcanic Depths",     icon:"🌋", levels:["Lava Fields","Molten Caverns","Eruption Zone","Inferno Lord"]},
+  {name:"Void Realm",          icon:"🌌", levels:["Void Rifts","Shattered Realm","Endless Abyss","Void Sovereign"]},
+  {name:"Haunted Woods",       icon:"🎃", levels:["Whispering Trees","Graveyard Path","Phantom Hollow","Wraith Keeper"]},
+  {name:"Coral Lagoon",        icon:"🐚", levels:["Tide Pools","Sunken Reef","Current Rush","Leviathan's Den"]},
+  {name:"Thunder Steppe",      icon:"⚡", levels:["Storm Plains","Lightning Run","Rolling Thunder","Storm Warden"]},
+  {name:"Golden Temple",       icon:"🏛", levels:["Temple Steps","Sunlit Halls","Sacred Vault","Temple Oracle"]},
+  {name:"Toxic Swamp",         icon:"☣️", levels:["Murky Trail","Bog of Fumes","Poison Depths","Swamp Behemoth"]},
+  {name:"Crimson Canyon",      icon:"🏔", levels:["Red Rock Pass","Canyon Winds","Crimson Drop","Canyon Titan"]},
+  {name:"Mechanical Foundry",  icon:"⚙️", levels:["Gear Works","Conveyor Chaos","Furnace Core","Foundry Overlord"]},
+  {name:"Blossom Gardens",     icon:"🌸", levels:["Petal Paths","Cherry Grove","Garden Maze","Bloom Sentinel"]},
+  {name:"Frostbite Ridge",     icon:"🧊", levels:["Frozen Ledge","Icicle Climb","Whiteout Pass","Frost Colossus"]},
+  {name:"Obsidian Wastes",     icon:"🖤", levels:["Shattered Glass","Black Sand Dunes","Obsidian Spire","Wastes Devourer"]},
+  {name:"Starlit Observatory", icon:"🔭", levels:["Telescope Deck","Comet Trail","Nebula Chamber","Star Warden"]},
+  {name:"Ascension",           icon:"👑", levels:["Gate of Ascension","Trial of the Fallen","Halls of Eternity","Ascension: True Final Boss"]},
+];
+const WORLDS = WORLD_DEFS.map((w,i)=>{
+  const id = i+1;
+  return {
+    id, name:w.name, icon:w.icon,
+    levels: w.levels.map((name,li)=>({ id:`${id}-${li+1}`, name, playable:true }))
+  };
+});
+const FINAL_WORLD_ID = WORLDS[WORLDS.length-1].id;
+const FINAL_LEVEL_ID = `${FINAL_WORLD_ID}-4`;
+
+// ===== ENHANCED ENEMY SYSTEM =====
+const ENEMY_TYPES = {
+  goomba: { speed:2, size:16, hp:1, dmg:1, reward:100, draw: function(ctx, e) {
+    ctx.fillStyle = '#8B4513'; ctx.beginPath(); ctx.ellipse(0, 0, 8, 6, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#222'; ctx.fillRect(-3, -2, 2, 2); ctx.fillRect(2, -2, 2, 2);
+  }},
+  koopa: { speed:1.5, size:18, hp:2, dmg:1.5, reward:200, draw: function(ctx, e) {
+    ctx.fillStyle = '#228B22'; ctx.beginPath(); ctx.ellipse(0, 0, 9, 7, 0, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#1a6b1a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(0, 0, 7, 5, 0, 0, Math.PI*2); ctx.stroke();
+    ctx.fillStyle = '#222'; ctx.fillRect(-3, -2, 2, 2); ctx.fillRect(2, -2, 2, 2);
+  }},
+  spinner: { speed:3, size:14, hp:1, dmg:2, reward:150, draw: function(ctx, e) {
+    ctx.fillStyle = '#9d4edd'; for(let i=0; i<4; i++) {
+      ctx.save(); ctx.rotate(e.angle + i*Math.PI/2); ctx.fillRect(-2, -7, 4, 7); ctx.restore();
+    } ctx.beginPath(); ctx.arc(0, 0, 3, 0, Math.PI*2); ctx.fill();
+  }},
+  flyer: { speed:2.5, size:12, hp:1, dmg:1, reward:180, draw: function(ctx, e) {
+    ctx.fillStyle = '#FF1493'; ctx.beginPath(); ctx.ellipse(0, 0, 6, 4, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle = '#FFB6C1'; ctx.beginPath(); ctx.ellipse(-5, -1, 3, 2, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(5, -1, 3, 2, 0, 0, Math.PI*2); ctx.fill();
+  }}
+};
+
+const POWERUP_TYPES = {
+  mushroom: { duration:0, icon:"🍄", effect:"grow", color:"#FF6B35" },
+  flower: { duration:300, icon:"🌹", effect:"fire", color:"#FFD700" },
+  star: { duration:600, icon:"⭐", effect:"invincible", color:"#FFC700" },
+  shield: { duration:0, icon:"🛡️", effect:"shield", color:"#4fd3c4" },
+  speedBoost: { duration:250, icon:"⚡", effect:"speed", color:"#FFFF00" }
+};
+
+const BOSS_TYPES = {
+  wizard: { hp:8, speed:1.5, size:40, reward:1000, attackPattern:"projectile" },
+  bowser: { hp:12, speed:2, size:50, reward:1500, attackPattern:"fireball" },
+  dragon: { hp:15, speed:2.5, size:60, reward:2000, attackPattern:"flying" }
+};
+
+/* Per-world palette - each world has unique vibrant colors */
+const WORLD_THEME = {
+  1:{ 
+    // Green Valley - Bright, natural green
+    sky:["#7fd8ff","#d7f4ff"], 
+    mountain:"#6fae46", 
+    hill:"#8fd35a", 
+    ground:"#8a5a2b", 
+    grass:"#4fae3f",
+    accent1:"#ff6b9d",
+    accent2:"#ffd700"
+  },
+  2:{ 
+    // Crystal Cave - Deep blue/purple with crystal shimmer
+    sky:["#1a0033","#4a0080"], 
+    mountain:"#6b4e9e", 
+    hill:"#9370db", 
+    ground:"#2d1b4e", 
+    grass:"#b8a7ff",
+    accent1:"#00ffff",
+    accent2:"#ff00ff"
+  },
+  3:{ 
+    // Desert Storm - Hot orange/yellow/red sands
+    sky:["#ff8c42","#ffb380"], 
+    mountain:"#cc5500", 
+    hill:"#ff9944", 
+    ground:"#c97c1c", 
+    grass:"#ff6b35",
+    accent1:"#ffd700",
+    accent2:"#ff4500"
+  },
+  4:{ 
+    // Sky Kingdom - Bright clouds and light blues
+    sky:["#87ceeb","#fff5e6"], 
+    mountain:"#e6f3ff", 
+    hill:"#ffffff", 
+    ground:"#b0d4ff", 
+    grass:"#ffff99",
+    accent1:"#ffa500",
+    accent2:"#ffff00"
+  },
+  5:{ 
+    // Dark Fortress - Ominous dark purples and reds
+    sky:["#0a0014","#2a1a4d"], 
+    mountain:"#4d0000", 
+    hill:"#6b0000", 
+    ground:"#1a0a1f", 
+    grass:"#8b0000",
+    accent1:"#ff1493",
+    accent2:"#ff0000"
+  },
+  6:{ // Frozen Peaks - Icy blues and white
+    sky:["#a8d8ff","#eaf7ff"], mountain:"#c9e6ff", hill:"#e8f5ff",
+    ground:"#5a7a9a", grass:"#cfeeff", accent1:"#00d4ff", accent2:"#ffffff"
+  },
+  7:{ // Volcanic Depths - Lava red/orange
+    sky:["#3d0d00","#a8320a"], mountain:"#5c1400", hill:"#8a2200",
+    ground:"#2b0800", grass:"#ff5500", accent1:"#ffae00", accent2:"#ff2200"
+  },
+  8:{ // Void Realm - Deep purple/black
+    sky:["#02010a","#150022"], mountain:"#1a0033", hill:"#2d0052",
+    ground:"#0a0018", grass:"#5b00a8", accent1:"#b400ff", accent2:"#00fff2"
+  },
+  20:{ // Ascension (final world) - magenta/black gauntlet
+    sky:["#100014","#3a0030"], mountain:"#4a0033", hill:"#6b0055",
+    ground:"#12000f", grass:"#ff00aa", accent1:"#ffffff", accent2:"#ff0066"
+  },
+};
+/* Worlds 9-19 each get their own procedurally-built palette so every one of the
+   20 worlds is a visually distinct scene, without hand-authoring 11 more objects. */
+const WORLD_HUES = {
+  9:  [270, true],  // Haunted Woods - violet gloom
+  10: [175, false], // Coral Lagoon - teal water
+  11: [200, true],  // Thunder Steppe - stormy steel blue
+  12: [45,  false], // Golden Temple - warm gold
+  13: [90,  true],  // Toxic Swamp - sickly yellow-green
+  14: [10,  true],  // Crimson Canyon - deep red-orange
+  15: [220, true],  // Mechanical Foundry - gunmetal blue-gray
+  16: [330, false], // Blossom Gardens - soft pink
+  17: [195, false], // Frostbite Ridge - icy blue-white
+  18: [280, true],  // Obsidian Wastes - near-black purple
+  19: [245, true],  // Starlit Observatory - deep indigo night
+};
+function hsl(h,s,l){ return `hsl(${((h%360)+360)%360},${s}%,${l}%)`; }
+Object.keys(WORLD_HUES).forEach(k=>{
+  const [h, dark] = WORLD_HUES[k];
+  WORLD_THEME[k] = {
+    sky:[ hsl(h,65,dark?16:68), hsl(h,55,dark?30:90) ],
+    mountain: hsl(h,45,dark?20:42),
+    hill:     hsl(h,50,dark?28:58),
+    ground:   hsl(h,40,dark?11:33),
+    grass:    hsl((h+20)%360,55,dark?32:52),
+    accent1:  hsl((h+150)%360,80,60),
+    accent2:  hsl((h+280)%360,80,65),
+  };
+});
+function currentWorldNum(){
+  if(!world) return 1;
+  return parseInt(String(world.id).split("-")[0],10) || 1;
+}
+function theme(){ return WORLD_THEME[currentWorldNum()] || WORLD_THEME[1]; }
+
+/* ---------------- Per-stage atmosphere ----------------
+   Each of the 20 stages gets its own time-of-day, sky and weather so no two
+   stages feel like the same scene, layered on top of each world's base
+   terrain palette above. Stage lengths (world*.width, ~5200-5900px) already
+   take a couple of minutes to clear at normal pace, so a single atmosphere
+   comfortably carries the whole stage. */
+const TIME_PALETTE = {
+  dawn:    { top:"#ffb37a", bottom:"#ffe3c4", body:"sun",  sunColor:"#fff1c9", glow:"rgba(255,200,140,.35)", stars:false },
+  day:     { top:"#7fd8ff", bottom:"#d7f4ff", body:"sun",  sunColor:"#fff6c9", glow:"rgba(255,255,255,.30)", stars:false },
+  noon:    { top:"#5fc2ff", bottom:"#c9ecff", body:"sun",  sunColor:"#fffbe0", glow:"rgba(255,255,255,.35)", stars:false },
+  overcast:{ top:"#8fa3b8", bottom:"#c7d3de", body:"none", sunColor:"#e7edf3", glow:"rgba(255,255,255,.18)", stars:false },
+  dusk:    { top:"#5b3a80", bottom:"#ff9a5a", body:"sun",  sunColor:"#ffcf7a", glow:"rgba(255,170,90,.40)",  stars:false },
+  sunset:  { top:"#3a1f5c", bottom:"#ff6a4d", body:"sun",  sunColor:"#ffb35a", glow:"rgba(255,120,70,.40)", stars:true  },
+  night:   { top:"#050615", bottom:"#141636", body:"moon", sunColor:"#dfe6ff", glow:"rgba(180,190,255,.18)",stars:true  },
+  storm:   { top:"#1c1f2e", bottom:"#3c4258", body:"none", sunColor:"#c9ccd8", glow:"rgba(200,200,220,.12)",stars:false },
+  blood:   { top:"#180007", bottom:"#420012", body:"moon", sunColor:"#ff2b4a", glow:"rgba(255,20,50,.28)", stars:false },
+};
+const LEVEL_ATMO = {
+  "1-1":{ label:"Dawn Meadow",     timeOfDay:"dawn",    weather:"none",      fog:0,    lightning:false },
+  "1-2":{ label:"Golden Noon",     timeOfDay:"noon",    weather:"petals",    fog:0,    lightning:false },
+  "1-3":{ label:"Firefly Dusk",    timeOfDay:"dusk",    weather:"fireflies", fog:0.12, lightning:false },
+  "1-4":{ label:"Storm Gate",      timeOfDay:"storm",   weather:"rain",      fog:0.18, lightning:true  },
+
+  "2-1":{ label:"Glow Tunnels",    timeOfDay:"night",   weather:"fireflies", fog:0.22, lightning:false },
+  "2-2":{ label:"Falling Rocks",   timeOfDay:"dusk",    weather:"dust",      fog:0.15, lightning:false },
+  "2-3":{ label:"Hidden Chambers", timeOfDay:"night",   weather:"none",      fog:0.32, lightning:false },
+  "2-4":{ label:"Guardian's Lair", timeOfDay:"storm",   weather:"embers",    fog:0.20, lightning:true  },
+
+  "3-1":{ label:"Sand Paths",      timeOfDay:"noon",    weather:"sand",      fog:0,    lightning:false },
+  "3-2":{ label:"Cactus Flats",    timeOfDay:"sunset",  weather:"sand",      fog:0.08, lightning:false },
+  "3-3":{ label:"Wind Sections",   timeOfDay:"overcast",weather:"sand",      fog:0.05, lightning:false },
+  "3-4":{ label:"Desert Fortress", timeOfDay:"dusk",    weather:"sand",      fog:0.15, lightning:false },
+
+  "4-1":{ label:"Cloud Platforms", timeOfDay:"day",     weather:"none",      fog:0,    lightning:false },
+  "4-2":{ label:"Windswept Skies", timeOfDay:"noon",    weather:"none",      fog:0,    lightning:false },
+  "4-3":{ label:"Vertical Climb",  timeOfDay:"dusk",    weather:"none",      fog:0.10, lightning:false },
+  "4-4":{ label:"Sky Fortress",    timeOfDay:"sunset",  weather:"rain",      fog:0.12, lightning:true  },
+
+  "5-1":{ label:"Trapped Halls",   timeOfDay:"night",   weather:"embers",    fog:0.25, lightning:false },
+  "5-2":{ label:"Dark Legion",     timeOfDay:"night",   weather:"embers",    fog:0.30, lightning:false },
+  "5-3":{ label:"Locked Vaults",   timeOfDay:"storm",   weather:"embers",    fog:0.32, lightning:true  },
+  "5-4":{ label:"Final Reckoning", timeOfDay:"blood",   weather:"embers",    fog:0.40, lightning:true  },
+
+  "6-1":{ label:"Icy Slopes",      timeOfDay:"overcast",weather:"none",      fog:0.10, lightning:false },
+  "6-2":{ label:"Frozen Lake",     timeOfDay:"day",     weather:"none",      fog:0,    lightning:false },
+  "6-3":{ label:"Blizzard Pass",   timeOfDay:"overcast",weather:"sand",      fog:0.22, lightning:false },
+  "6-4":{ label:"Glacier Guardian",timeOfDay:"night",   weather:"none",      fog:0.28, lightning:true  },
+
+  "7-1":{ label:"Lava Fields",     timeOfDay:"sunset",  weather:"embers",    fog:0.10, lightning:false },
+  "7-2":{ label:"Molten Caverns",  timeOfDay:"night",   weather:"embers",    fog:0.25, lightning:false },
+  "7-3":{ label:"Eruption Zone",   timeOfDay:"storm",   weather:"embers",    fog:0.20, lightning:true  },
+  "7-4":{ label:"Inferno Lord",    timeOfDay:"blood",   weather:"embers",    fog:0.30, lightning:true  },
+
+  "8-1":{ label:"Void Rifts",      timeOfDay:"night",   weather:"fireflies", fog:0.30, lightning:false },
+  "8-2":{ label:"Shattered Realm", timeOfDay:"night",   weather:"none",      fog:0.35, lightning:false },
+  "8-3":{ label:"Endless Abyss",   timeOfDay:"night",   weather:"embers",    fog:0.40, lightning:false },
+  "8-4":{ label:"Void Sovereign",  timeOfDay:"blood",   weather:"embers",    fog:0.35, lightning:true  },
+
+  "9-1": { label:"Whispering Trees", timeOfDay:"dusk",    weather:"fireflies", fog:0.20, lightning:false },
+  "9-2": { label:"Graveyard Path",   timeOfDay:"night",   weather:"fireflies", fog:0.28, lightning:false },
+  "9-3": { label:"Phantom Hollow",   timeOfDay:"night",   weather:"none",      fog:0.34, lightning:false },
+  "9-4": { label:"Wraith Keeper",    timeOfDay:"storm",   weather:"embers",    fog:0.36, lightning:true  },
+
+  "10-1":{ label:"Tide Pools",       timeOfDay:"day",     weather:"none",      fog:0,    lightning:false },
+  "10-2":{ label:"Sunken Reef",      timeOfDay:"noon",    weather:"none",      fog:0.06, lightning:false },
+  "10-3":{ label:"Current Rush",     timeOfDay:"dusk",     weather:"rain",     fog:0.14, lightning:false },
+  "10-4":{ label:"Leviathan's Den",  timeOfDay:"storm",   weather:"rain",      fog:0.24, lightning:true  },
+
+  "11-1":{ label:"Storm Plains",     timeOfDay:"overcast",weather:"rain",      fog:0.10, lightning:false },
+  "11-2":{ label:"Lightning Run",    timeOfDay:"storm",   weather:"rain",      fog:0.18, lightning:true  },
+  "11-3":{ label:"Rolling Thunder",  timeOfDay:"storm",   weather:"rain",      fog:0.24, lightning:true  },
+  "11-4":{ label:"Storm Warden",     timeOfDay:"storm",   weather:"rain",      fog:0.32, lightning:true  },
+
+  "12-1":{ label:"Temple Steps",     timeOfDay:"dawn",    weather:"none",      fog:0,    lightning:false },
+  "12-2":{ label:"Sunlit Halls",     timeOfDay:"noon",    weather:"petals",    fog:0,    lightning:false },
+  "12-3":{ label:"Sacred Vault",     timeOfDay:"dusk",    weather:"petals",    fog:0.12, lightning:false },
+  "12-4":{ label:"Temple Oracle",    timeOfDay:"sunset",  weather:"embers",    fog:0.20, lightning:true  },
+
+  "13-1":{ label:"Murky Trail",      timeOfDay:"overcast",weather:"dust",      fog:0.20, lightning:false },
+  "13-2":{ label:"Bog of Fumes",     timeOfDay:"night",   weather:"dust",      fog:0.28, lightning:false },
+  "13-3":{ label:"Poison Depths",    timeOfDay:"night",   weather:"none",      fog:0.36, lightning:false },
+  "13-4":{ label:"Swamp Behemoth",   timeOfDay:"blood",   weather:"embers",    fog:0.38, lightning:true  },
+
+  "14-1":{ label:"Red Rock Pass",    timeOfDay:"sunset",  weather:"sand",      fog:0.10, lightning:false },
+  "14-2":{ label:"Canyon Winds",     timeOfDay:"dusk",    weather:"sand",      fog:0.16, lightning:false },
+  "14-3":{ label:"Crimson Drop",     timeOfDay:"blood",   weather:"sand",      fog:0.24, lightning:false },
+  "14-4":{ label:"Canyon Titan",     timeOfDay:"blood",   weather:"embers",    fog:0.34, lightning:true  },
+
+  "15-1":{ label:"Gear Works",       timeOfDay:"overcast",weather:"dust",      fog:0.12, lightning:false },
+  "15-2":{ label:"Conveyor Chaos",   timeOfDay:"night",   weather:"embers",    fog:0.22, lightning:false },
+  "15-3":{ label:"Furnace Core",     timeOfDay:"night",   weather:"embers",    fog:0.30, lightning:false },
+  "15-4":{ label:"Foundry Overlord", timeOfDay:"storm",   weather:"embers",    fog:0.36, lightning:true  },
+
+  "16-1":{ label:"Petal Paths",      timeOfDay:"dawn",    weather:"petals",    fog:0,    lightning:false },
+  "16-2":{ label:"Cherry Grove",     timeOfDay:"day",     weather:"petals",    fog:0,    lightning:false },
+  "16-3":{ label:"Garden Maze",      timeOfDay:"dusk",    weather:"petals",    fog:0.10, lightning:false },
+  "16-4":{ label:"Bloom Sentinel",   timeOfDay:"sunset",  weather:"petals",    fog:0.18, lightning:true  },
+
+  "17-1":{ label:"Frozen Ledge",     timeOfDay:"overcast",weather:"none",      fog:0.14, lightning:false },
+  "17-2":{ label:"Icicle Climb",     timeOfDay:"day",     weather:"sand",      fog:0.18, lightning:false },
+  "17-3":{ label:"Whiteout Pass",    timeOfDay:"overcast",weather:"sand",      fog:0.30, lightning:false },
+  "17-4":{ label:"Frost Colossus",   timeOfDay:"night",   weather:"sand",      fog:0.38, lightning:true  },
+
+  "18-1":{ label:"Shattered Glass",  timeOfDay:"night",   weather:"none",      fog:0.30, lightning:false },
+  "18-2":{ label:"Black Sand Dunes", timeOfDay:"night",   weather:"sand",      fog:0.34, lightning:false },
+  "18-3":{ label:"Obsidian Spire",   timeOfDay:"night",   weather:"embers",    fog:0.40, lightning:false },
+  "18-4":{ label:"Wastes Devourer",  timeOfDay:"blood",   weather:"embers",    fog:0.44, lightning:true  },
+
+  "19-1":{ label:"Telescope Deck",   timeOfDay:"night",   weather:"fireflies", fog:0.20, lightning:false },
+  "19-2":{ label:"Comet Trail",      timeOfDay:"night",   weather:"fireflies", fog:0.26, lightning:false },
+  "19-3":{ label:"Nebula Chamber",   timeOfDay:"night",   weather:"fireflies", fog:0.34, lightning:false },
+  "19-4":{ label:"Star Warden",      timeOfDay:"storm",   weather:"embers",    fog:0.38, lightning:true  },
+
+  "20-1":{ label:"Gate of Ascension",         timeOfDay:"storm", weather:"embers", fog:0.34, lightning:true },
+  "20-2":{ label:"Trial of the Fallen",       timeOfDay:"blood", weather:"embers", fog:0.38, lightning:true },
+  "20-3":{ label:"Halls of Eternity",         timeOfDay:"storm", weather:"embers", fog:0.42, lightning:true },
+  "20-4":{ label:"True Final Boss",           timeOfDay:"blood", weather:"embers", fog:0.50, lightning:true },
+};
+function atmo(){ return LEVEL_ATMO[world && world.id] || LEVEL_ATMO["1-1"]; }
+
+const STAR_FIELD = Array.from({length:46}, ()=>({
+  x: Math.random()*VW, y: Math.random()*(VH*0.65), seed: Math.random()*10
+}));
+
+let flashT = 0, flashCooldown = 3;
+let weatherParticles = [];
+
+function spawnWeatherParticle(type, initial){
+  const x = Math.random()*VW;
+  if(type==="rain") return {type, x, y: initial? Math.random()*VH : -20, vx:-60, vy:520+Math.random()*180, len:14+Math.random()*10};
+  if(type==="sand") return {type, x: initial? x : VW+10, y: Math.random()*VH, vx:-90-Math.random()*60, vy:10+Math.random()*20, size:1+Math.random()*2};
+  if(type==="dust") return {type, x: initial? x : VW+10, y: Math.random()*VH*0.8+VH*0.1, vx:-40-Math.random()*30, vy:-5+Math.random()*10, size:1.5+Math.random()*2};
+  if(type==="petals") return {type, x, y: initial? Math.random()*VH : -10, vx:-20+Math.random()*10, vy:30+Math.random()*20, size:3+Math.random()*3, t:Math.random()*10};
+  if(type==="embers") return {type, x, y: VH-Math.random()*30, vx:(Math.random()-0.5)*20, vy:-30-Math.random()*40, size:1.5+Math.random()*2, t:Math.random()*10};
+  if(type==="fireflies") return {type, baseX:x, baseY: Math.random()*VH*0.6+VH*0.15, x, y:0, t:Math.random()*10, r:1.5+Math.random()*1.5};
+  return {type, x, y:0};
+}
+function initWeather(){
+  weatherParticles = [];
+  const w = atmo().weather;
+  const density = {rain:65, sand:45, dust:26, petals:20, embers:26, fireflies:18, none:0}[w] || 0;
+  for(let i=0;i<density;i++) weatherParticles.push(spawnWeatherParticle(w, true));
+}
+function updateWeather(dt){
+  const a = atmo();
+  if(a.weather && a.weather!=="none"){
+    for(const p of weatherParticles){
+      if(p.type==="fireflies"){
+        p.t += dt*0.7;
+        p.x = p.baseX + Math.sin(p.t*0.6)*34;
+        p.y = p.baseY + Math.cos(p.t*0.5)*22;
+        continue;
+      }
+      p.x += (p.vx||0)*dt; p.y += (p.vy||0)*dt;
+      if(p.type==="petals") p.t += dt*2, p.x += Math.sin(p.t)*8*dt;
+      if(p.type==="embers") p.t += dt*2, p.x += Math.sin(p.t)*10*dt;
+      if(p.y>VH+20 || p.y<-30 || p.x<-30 || p.x>VW+30){
+        Object.assign(p, spawnWeatherParticle(p.type, false));
+      }
+    }
+  }
+  if(a.lightning){
+    flashCooldown -= dt;
+    if(flashCooldown<=0){ flashT = 0.14; flashCooldown = 3+Math.random()*5; }
+  }
+  if(flashT>0) flashT = Math.max(0, flashT-dt*4);
+}
+function drawWeather(){
+  const a = atmo();
+  if(!a.weather || a.weather==="none") return;
+  ctx.save();
+  if(a.weather==="rain"){
+    ctx.strokeStyle="rgba(210,225,255,.55)"; ctx.lineWidth=2;
+    for(const p of weatherParticles){ ctx.beginPath(); ctx.moveTo(p.x,p.y); ctx.lineTo(p.x-6,p.y+p.len); ctx.stroke(); }
+  } else if(a.weather==="sand"){
+    ctx.fillStyle="rgba(230,190,120,.5)";
+    for(const p of weatherParticles) ctx.fillRect(p.x,p.y,p.size,p.size);
+  } else if(a.weather==="dust"){
+    ctx.fillStyle="rgba(120,90,60,.4)";
+    for(const p of weatherParticles){ ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,7); ctx.fill(); }
+  } else if(a.weather==="petals"){
+    ctx.fillStyle="rgba(255,180,210,.85)";
+    for(const p of weatherParticles){ ctx.beginPath(); ctx.ellipse(p.x,p.y,p.size,p.size*0.6,p.t,0,7); ctx.fill(); }
+  } else if(a.weather==="embers"){
+    ctx.fillStyle="rgba(255,140,60,.8)";
+    for(const p of weatherParticles){ ctx.beginPath(); ctx.arc(p.x,p.y,p.size,0,7); ctx.fill(); }
+  } else if(a.weather==="fireflies"){
+    for(const p of weatherParticles){
+      const tw = 0.4+0.6*Math.max(0,Math.sin(p.t*3+p.baseX));
+      ctx.fillStyle=`rgba(255,240,140,${0.25+0.65*tw})`;
+      ctx.beginPath(); ctx.arc(p.x,p.y,p.r,0,7); ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+function drawFog(){
+  const a = atmo();
+  if(!a.fog) return;
+  let c = `rgba(200,210,230,${a.fog})`;
+  if(a.timeOfDay==="blood") c = `rgba(90,10,20,${a.fog})`;
+  else if(a.timeOfDay==="storm") c = `rgba(40,42,60,${a.fog})`;
+  else if(a.timeOfDay==="night") c = `rgba(30,34,70,${a.fog})`;
+  ctx.fillStyle = c;
+  ctx.fillRect(0,0,VW,VH);
+}
+
+function isWorldUnlocked(w){ return w===1 || !!save.completed[`${w-1}-4`]; }
+function isLevelUnlocked(id){ return !!save.unlocked[id]; }
+
+function buildWorldGrid(){
+  const grid = document.getElementById("worldGrid");
+  grid.innerHTML = "";
+  WORLDS.forEach(w=>{
+    const unlocked = isWorldUnlocked(w.id);
+    const card = document.createElement("div");
+    card.className = "worldCard" + (unlocked ? "" : " locked");
+    card.innerHTML = `<div class="icon">${w.icon}</div><div>World ${w.id}</div><div style="font-size:10px; opacity:.75;">${w.name}</div>`;
+    card.onclick = ()=>{ if(!unlocked) return; SFX.select(); openLevelSelect(w.id); };
+    grid.appendChild(card);
+  });
+}
+function openLevelSelect(worldId){
+  const w = WORLDS.find(x=>x.id===worldId);
+  document.getElementById("levelSelectTitle").textContent = `WORLD ${w.id} — ${w.name.toUpperCase()}`;
+  const grid = document.getElementById("levelGrid");
+  grid.innerHTML = "";
+  w.levels.forEach(lv=>{
+    const unlocked = isLevelUnlocked(lv.id) && lv.playable;
+    const done = !!save.completed[lv.id];
+    const card = document.createElement("div");
+    card.className = "levelCard" + (unlocked ? "" : " locked");
+    card.innerHTML = `<div>${lv.id}</div><div style="font-size:11px;">${lv.name}</div><div class="stars">${done ? "★ Complete" : (lv.playable? "New" : "Coming soon")}</div>`;
+    card.onclick = ()=>{
+      if(!unlocked) { if(lv.playable) toast("Complete previous levels first!"); else toast("Coming soon!"); return; }
+      SFX.select();
+      startLevel(lv.id);
+    };
+    grid.appendChild(card);
+  });
+  showScreen("levelSelect");
+}
+
+/* ---------------- Input ---------------- */
+const input = { left:false, right:false, up:false, down:false, jump:false, jumpPressed:false, action:false, actionPressed:false };
+function bindHold(el, onDown, onUp){
+  const down = e=>{ e.preventDefault(); el.classList.add("active"); onDown(); };
+  const up = e=>{ e.preventDefault(); el.classList.remove("active"); onUp(); };
+  el.addEventListener("touchstart", down, {passive:false});
+  el.addEventListener("touchend", up, {passive:false});
+  el.addEventListener("touchcancel", up, {passive:false});
+  el.addEventListener("mousedown", down);
+  el.addEventListener("mouseup", up);
+  el.addEventListener("mouseleave", up);
+}
+/* Analog-stick control: drag the knob anywhere inside the pad and its
+   angle/distance from center drives the same input flags the old four
+   buttons used to set — movement/physics code is untouched. */
+(function(){
+  const pad = document.getElementById("dpad");
+  const knob = document.getElementById("dpadKnob");
+  const arrows = {
+    left: document.getElementById("dpadArrowLeft"),
+    right: document.getElementById("dpadArrowRight"),
+    up: document.getElementById("dpadArrowUp"),
+    down: document.getElementById("dpadArrowDown"),
+  };
+  const dirFns = {
+    left:  { on:()=>input.left=true,  off:()=>input.left=false },
+    right: { on:()=>input.right=true, off:()=>input.right=false },
+    up:    { on:()=>{ input.up=true; if(!input.jump) input.jumpPressed=true; input.jump=true; },
+             off:()=>{ input.up=false; input.jump=false; } },
+    down:  { on:()=>input.down=true,  off:()=>input.down=false },
+  };
+  let active = new Set();
+  let dragging = false;
+  const DEAD = 14, MAXR = 44;
+
+  function setActive(next){
+    for(const d of active) if(!next.has(d)){ dirFns[d].off(); arrows[d].classList.remove("active"); }
+    for(const d of next) if(!active.has(d)){ dirFns[d].on(); arrows[d].classList.add("active"); }
+    active = next;
+  }
+  function update(clientX, clientY){
+    const r = pad.getBoundingClientRect();
+    const dx = clientX-(r.left+r.width/2), dy = clientY-(r.top+r.height/2);
+    const dist = Math.hypot(dx,dy);
+    const clamped = Math.min(dist, MAXR);
+    const ang = Math.atan2(dy,dx);
+    knob.style.transform = `translate(${Math.cos(ang)*clamped}px, ${Math.sin(ang)*clamped}px)`;
+    const next = new Set();
+    if(dist >= DEAD){
+      const deg = ang*180/Math.PI;
+      if(deg>-157.5 && deg<-22.5) next.add("up");
+      if(deg>22.5 && deg<157.5) next.add("down");
+      if(deg>-67.5 && deg<67.5) next.add("right");
+      if(deg>112.5 || deg<-112.5) next.add("left");
+    }
+    setActive(next);
+  }
+  function start(e){
+    dragging = true;
+    knob.classList.add("dragging");
+    knob.style.transition = "none";
+    if(pad.setPointerCapture) pad.setPointerCapture(e.pointerId);
+    update(e.clientX, e.clientY);
+    e.preventDefault();
+  }
+  function move(e){ if(dragging){ update(e.clientX, e.clientY); e.preventDefault(); } }
+  function end(){
+    if(!dragging) return;
+    dragging = false;
+    knob.classList.remove("dragging");
+    knob.style.transition = "transform .15s ease-out";
+    knob.style.transform = "translate(0,0)";
+    setActive(new Set());
+  }
+  pad.addEventListener("pointerdown", start, {passive:false});
+  pad.addEventListener("pointermove", move, {passive:false});
+  pad.addEventListener("pointerup", end, {passive:false});
+  pad.addEventListener("pointercancel", end, {passive:false});
+})();
+bindHold(document.getElementById("jumpBtn"),
+  ()=>{ if(!input.jump) input.jumpPressed=true; input.jump=true; },
+  ()=>input.jump=false);
+bindHold(document.getElementById("actionBtn"),
+  ()=>{ if(!input.action) input.actionPressed=true; input.action=true; },
+  ()=>input.action=false);
+
+document.getElementById("pauseBtn").addEventListener("click", ()=>pauseGame());
+
+/* ---------------- Mobile/Android polish: landscape lock, wake lock, auto pause+resume ---------------- */
+let _landscapeTried = false;
+async function tryLockLandscape(){
+  try{
+    const el = document.documentElement;
+    if(!document.fullscreenElement && el.requestFullscreen){
+      await el.requestFullscreen().catch(()=>{});
+    } else if(!document.webkitFullscreenElement && el.webkitRequestFullscreen){
+      el.webkitRequestFullscreen();
+    }
+  }catch(e){}
+  try{
+    if(screen.orientation && screen.orientation.lock){
+      await screen.orientation.lock("landscape").catch(()=>{});
+    }
+  }catch(e){}
+}
+function ensureLandscape(){
+  if(_landscapeTried) return;
+  _landscapeTried = true;
+  tryLockLandscape();
+}
+document.addEventListener("pointerdown", ensureLandscape, {once:true, passive:true});
+document.addEventListener("touchstart", ensureLandscape, {once:true, passive:true});
+
+let wakeLock = null;
+async function requestWakeLock(){
+  try{
+    if("wakeLock" in navigator){
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", ()=>{ wakeLock=null; });
+    }
+  }catch(e){ wakeLock=null; }
+}
+function releaseWakeLock(){
+  if(wakeLock){ wakeLock.release().catch(()=>{}); wakeLock=null; }
+}
+
+document.addEventListener("visibilitychange", ()=>{
+  if(document.hidden){
+    if(state.mode==="playing") pauseGame(true);
+    releaseWakeLock();
+  } else {
+    if(state.mode==="paused" && state._autoPaused) resumeGame();
+    else if(state.mode==="playing") requestWakeLock();
+  }
+});
+window.addEventListener("pagehide", ()=>{ if(state.mode==="playing") pauseGame(true); });
+window.addEventListener("blur", ()=>{ if(state.mode==="playing") pauseGame(true); });
+
+window.addEventListener("keydown", e=>{
+  if(["ArrowLeft","a","A"].includes(e.key)) input.left=true;
+  if(["ArrowRight","d","D"].includes(e.key)) input.right=true;
+  if([" ","ArrowUp","w","W"].includes(e.key)){ if(!input.jump) input.jumpPressed=true; input.jump=true; e.preventDefault(); }
+  if(["x","X"].includes(e.key)){ if(!input.action) input.actionPressed=true; input.action=true; }
+  if(e.key==="Escape"){ if(state.mode==="playing") pauseGame(); else if(state.mode==="paused") resumeGame(); }
+});
+window.addEventListener("keyup", e=>{
+  if(["ArrowLeft","a","A"].includes(e.key)) input.left=false;
+  if(["ArrowRight","d","D"].includes(e.key)) input.right=false;
+  if([" ","ArrowUp","w","W"].includes(e.key)) input.jump=false;
+  if(["x","X"].includes(e.key)) input.action=false;
+});
+// prevent page scroll/zoom while touching game area
+document.getElementById("gameContainer").addEventListener("touchmove", e=>e.preventDefault(), {passive:false});
+
+/* ---------------- Game state ---------------- */
+const state = { mode:"menu", level:null, elapsed:0, _autoPaused:false };
+const GRAVITY = 1900;           // Law of flight / gravity physics (unchanged)
+const MOVE_ACCEL = 2600;
+const MOVE_MAX = 350;            // INCREASED from 260 - Let Mario run LONGER/FASTER
+const FRICTION = 2200;
+const JUMP_VELOCITY = -850;      // INCREASED from -680 - Higher jump with better gravity
+const TILE = 48;
+
+let world; // current level runtime data
+
+/* Level 1-1 "Training Valley" layout, built on a simple grid.
+   Ground + floating platforms + gap + enemies + coins + crystal + secret + checkpoint + goal. */
+function buildLevel_1_1(){
+  const groundY = VH - TILE*2;
+  const platforms = [];
+  platforms.push({x:0, y:groundY, w:950, h:TILE*2, type:"ground"});
+  platforms.push({x:1050, y:groundY-140, w:250, h:TILE*2+140, type:"ground"});
+  platforms.push({x:1380, y:groundY, w:700, h:TILE*2, type:"ground"});
+  platforms.push({x:2150, y:groundY-180, w:250, h:TILE*2+180, type:"ground"});
+  platforms.push({x:2480, y:groundY, w:850, h:TILE*2, type:"ground"});
+  platforms.push({x:3400, y:groundY-150, w:300, h:TILE*2+150, type:"ground"});
+  platforms.push({x:3800, y:groundY, w:1000, h:TILE*2, type:"ground"});
+  platforms.push({x:4900, y:groundY-120, w:300, h:TILE*2+120, type:"ground"});
+
+  platforms.push({x:1120, y:groundY-240, w:100, h:22, type:"float"});
+  platforms.push({x:1380, y:groundY-280, w:120, h:22, type:"float"});
+  platforms.push({x:1650, y:groundY-200, w:110, h:22, type:"float"});
+  platforms.push({x:2250, y:groundY-280, w:130, h:22, type:"float"});
+  platforms.push({x:2550, y:groundY-220, w:115, h:22, type:"float"});
+  platforms.push({x:3500, y:groundY-260, w:110, h:22, type:"float"});
+  platforms.push({x:3900, y:groundY-200, w:130, h:22, type:"float"});
+  platforms.push({x:4200, y:groundY-240, w:120, h:22, type:"float"});
+  platforms.push({x:5050, y:groundY-220, w:110, h:22, type:"float"});
+
+  platforms.push({x:1650, y:groundY-420, w:220, h:24, type:"secret"});
+  platforms.push({x:3900, y:groundY-380, w:220, h:24, type:"secret"});
+
+  const coins = [];
+  [ [200,groundY-40],[250,groundY-40],[300,groundY-40],
+    [1100,groundY-280],[1420,groundY-320],[1480,groundY-240],
+    [1700,groundY-180],[2000,groundY-40],[2300,groundY-320],[2600,groundY-260],
+    [2800,groundY-40],[2850,groundY-40],[3100,groundY-40],
+    [3550,groundY-300],[3900,groundY-240],[4200,groundY-280],
+    [4400,groundY-40],[4450,groundY-40],[5050,groundY-260],[5150,groundY-40]
+  ].forEach(([x,y])=>coins.push({x,y,r:10,taken:false}));
+
+  const crystals = [
+    {x:1720, y:groundY-460, r:14, taken:false, secret:true},
+    {x:3970, y:groundY-420, r:14, taken:false, secret:true},
+    {x:3050, y:groundY-40, r:14, taken:false, secret:false},
+  ];
+
+  const enemies = [
+    {type:"walker", x:800, minX:750, maxX:1000, y:groundY-24, w:34, h:34, dir:1, speed:70, alive:true, hp:1},
+    {type:"walker", x:1900, minX:1850, maxX:2100, y:groundY-24, w:34, h:34, dir:-1, speed:75, alive:true, hp:1},
+    {type:"flyer", x:2300, baseY:groundY-220, amp:60, y:groundY-220, minX:2100, maxX:2600, w:34, h:28, dir:1, speed:70, t:0, alive:true, hp:1},
+    {type:"walker", x:3200, minX:3150, maxX:3450, y:groundY-24, w:34, h:34, dir:1, speed:75, alive:true, hp:1},
+    {type:"flyer", x:4100, baseY:groundY-180, amp:70, y:groundY-180, minX:3900, maxX:4400, w:34, h:28, dir:-1, speed:65, t:0, alive:true, hp:1},
+    {type:"walker", x:5000, minX:4950, maxX:5200, y:groundY-24, w:34, h:34, dir:1, speed:80, alive:true, hp:1},
+  ];
+
+  const powerups = [
+    {type:"speed", x:2600, y:groundY-40, w:26, h:26, taken:false},
+  ];
+
+  // Point-coins rest on top of a few of the green float stands above (not every one) —
+  // stands at x:1120, 1650, 2550, 3500, 4200, 5050 host a coin; the rest stay bare.
+  const boxes = [
+    {x:1150, y:groundY-280, w:40, h:40, hit:false, points:20},
+    {x:1685, y:groundY-240, w:40, h:40, hit:false, points:20},
+    {x:2588, y:groundY-260, w:40, h:40, hit:false, points:20},
+    {x:3535, y:groundY-300, w:40, h:40, hit:false, points:25},
+    {x:4240, y:groundY-280, w:40, h:40, hit:false, points:20},
+    {x:5085, y:groundY-260, w:40, h:40, hit:false, points:25},
+  ];
+
+  const checkpoint = {x:2500, y:groundY-24, w:20, h:60, passed:false};
+  const goal = {x:5350, y:groundY-140, w:36, h:140};
+
+  const width = 5500;
+  return {
+    id:"1-1", name:"Training Valley",
+    groundY, width, platforms, coins, crystals, enemies, powerups, boxes, checkpoint, goal,
+    spawn:{x:60,y:groundY-40}, checkpointReached:false,
+  };
+}
+
+/* Level 1-2 "Coin Hills" — rolling terrain, dense coin arcs, extended to 80+ seconds */
+function buildLevel_1_2(){
+  const groundY = VH - TILE*2;
+  const platforms = [];
+  platforms.push({x:0,    y:groundY,    w:750,  h:TILE*2,    type:"ground"});
+  platforms.push({x:850,  y:groundY-80, w:280,  h:TILE*2+80, type:"ground"});
+  platforms.push({x:1200, y:groundY,    w:350,  h:TILE*2,    type:"ground"});
+  platforms.push({x:1650, y:groundY-120, w:250,  h:TILE*2+120, type:"ground"});
+  platforms.push({x:1980, y:groundY,    w:600,  h:TILE*2,    type:"ground"});
+  platforms.push({x:2650, y:groundY-100, w:280,  h:TILE*2+100, type:"ground"});
+  platforms.push({x:3000, y:groundY,    w:1200, h:TILE*2,    type:"ground"});
+  platforms.push({x:4300, y:groundY-140, w:300, h:TILE*2+140, type:"ground"});
+  platforms.push({x:4700, y:groundY,    w:850, h:TILE*2,    type:"ground"});
+
+  platforms.push({x:950,  y:groundY-160, w:120, h:22, type:"float"});
+  platforms.push({x:1320, y:groundY-190, w:130, h:22, type:"float"});
+  platforms.push({x:1800, y:groundY-200, w:120, h:22, type:"float"});
+  platforms.push({x:2150, y:groundY-150, w:140, h:22, type:"float"});
+  platforms.push({x:2800, y:groundY-180, w:130, h:22, type:"float"});
+  platforms.push({x:3300, y:groundY-140, w:120, h:22, type:"float"});
+  platforms.push({x:3700, y:groundY-200, w:140, h:22, type:"float"});
+  platforms.push({x:4450, y:groundY-220, w:130, h:22, type:"float"});
+  platforms.push({x:4900, y:groundY-160, w:120, h:22, type:"float"});
+
+  platforms.push({x:1800, y:groundY-350, w:200, h:22, type:"secret"});
+  platforms.push({x:3700, y:groundY-320, w:200, h:22, type:"secret"});
+
+  const coins = [];
+  function arc(cx,cy,count,radius){
+    for(let i=0;i<count;i++){
+      const a = Math.PI + (Math.PI*i/(count-1));
+      coins.push({x:cx+Math.cos(a)*radius, y:cy+Math.sin(a)*radius*0.6, r:9, taken:false});
+    }
+  }
+  arc(1000, groundY-220, 7, 90);
+  arc(1850,groundY-240, 7, 100);
+  arc(2750,groundY-220, 6, 85);
+  arc(3650,groundY-240, 6, 90);
+  arc(4850,groundY-210, 6, 80);
+  [[300,groundY-40],[350,groundY-40],[400,groundY-40],
+   [1400,groundY-40],[1450,groundY-40],[1500,groundY-40],
+   [2200,groundY-40],[2250,groundY-40],[3300,groundY-40],[3350,groundY-40],[3400,groundY-40],
+   [4500,groundY-40],[4550,groundY-40],[5000,groundY-40],[5050,groundY-40]
+  ].forEach(([x,y])=>coins.push({x,y,r:9,taken:false}));
+
+  const crystals = [
+    {x:1870, y:groundY-390, r:14, taken:false, secret:true},
+    {x:3770, y:groundY-360, r:14, taken:false, secret:true},
+    {x:3600, y:groundY-40,  r:14, taken:false, secret:false},
+  ];
+
+  const enemies = [
+    {type:"walker", x:900,  minX:850,  maxX:1100, y:groundY-120, w:34,h:34,dir:1, speed:75, alive:true, hp:1},
+    {type:"walker", x:1750, minX:1700, maxX:1950, y:groundY-24, w:34,h:34,dir:-1,speed:80, alive:true, hp:1},
+    {type:"flyer",  x:2200, baseY:groundY-200, amp:75, y:groundY-200, minX:2000, maxX:2500, w:34,h:28, dir:1, speed:70, t:0, alive:true, hp:1},
+    {type:"walker", x:3200, minX:3100, maxX:3400, y:groundY-24, w:34,h:34,dir:1, speed:80, alive:true, hp:1},
+    {type:"flyer",  x:3900, baseY:groundY-240, amp:80, y:groundY-240, minX:3700, maxX:4200, w:34,h:28, dir:-1, speed:75, t:0, alive:true, hp:1},
+    {type:"walker", x:4800, minX:4750, maxX:5050, y:groundY-24, w:34,h:34,dir:1, speed:85, alive:true, hp:1},
+  ];
+
+  const powerups = [
+    {type:"speed", x:2400, y:groundY-40, w:26, h:26, taken:false},
+  ];
+
+  const boxes = [
+    // resting on the green float stands at x:950, 1800, 2800, 3700, 4900 — skipping the rest
+    {x:990, y:groundY-200, w:40, h:40, hit:false, points:20},
+    {x:1840, y:groundY-240, w:40, h:40, hit:false, points:20},
+    {x:2845, y:groundY-220, w:40, h:40, hit:false, points:20},
+    {x:3750, y:groundY-240, w:40, h:40, hit:false, points:25},
+    {x:4940, y:groundY-200, w:40, h:40, hit:false, points:25},
+  ];
+
+  const checkpoint = {x:2500, y:groundY-24, w:20, h:60, passed:false};
+  const goal = {x:5350, y:groundY-140, w:36, h:140};
+  const width = 5500;
+
+  return {
+    id:"1-2", name:"Coin Hills",
+    groundY, width, platforms, coins, crystals, enemies, powerups, boxes, checkpoint, goal,
+    spawn:{x:60,y:groundY-40}, checkpointReached:false,
+  };
+}
+
+/* Level 1-3 "Moving Platforms" — horizontal + vertical lifts bridge the gaps. */
+function buildLevel_1_3(){
+  const groundY = VH - TILE*2;
+  const platforms = [];
+  platforms.push({x:0,    y:groundY, w:700,  h:TILE*2, type:"ground"});
+  platforms.push({x:750,  y:groundY-40, w:130, h:22, type:"moveH", minX:750, maxX:1400, speed:100, dir:1, dx:0, dy:0});
+  platforms.push({x:1550, y:groundY, w:450, h:TILE*2, type:"ground"});
+  platforms.push({x:2050, y:groundY-50, w:130, h:22, type:"moveV", minY:groundY-280, maxY:groundY-50, speed:80, dir:-1, dx:0, dy:0});
+  platforms.push({x:2200, y:groundY-280, w:300, h:24, type:"float"});
+  platforms.push({x:2250, y:groundY-400, w:160, h:22, type:"secret"});
+  platforms.push({x:2550, y:groundY-180, w:140, h:22, type:"float"});
+  platforms.push({x:2750, y:groundY, w:350, h:TILE*2, type:"ground"});
+  platforms.push({x:3150, y:groundY-40, w:140, h:22, type:"moveH", minX:3150, maxX:3750, speed:110, dir:1, dx:0, dy:0});
+  platforms.push({x:3950, y:groundY, w:400, h:TILE*2, type:"ground"});
+  platforms.push({x:4450, y:groundY-60, w:140, h:22, type:"moveV", minY:groundY-260, maxY:groundY-60, speed:90, dir:1, dx:0, dy:0});
+  platforms.push({x:4600, y:groundY-260, w:280, h:24, type:"float"});
+  platforms.push({x:5000, y:groundY, w:700, h:TILE*2, type:"ground"});
+
+  const coins = [];
+  [[300,groundY-40],[350,groundY-40],[400,groundY-40],
+   [800,groundY-100],[1000,groundY-100],[1200,groundY-100],
+   [1650,groundY-40],[1750,groundY-40],[1850,groundY-40],
+   [2200,groundY-320],[2280,groundY-320],[2360,groundY-320],[2440,groundY-320],
+   [2800,groundY-40],[2850,groundY-40],[2900,groundY-40],
+   [3200,groundY-100],[3400,groundY-100],[3600,groundY-100],
+   [4000,groundY-40],[4100,groundY-40],[4200,groundY-40],
+   [4650,groundY-300],[4750,groundY-300],[4850,groundY-300],
+   [5150,groundY-40],[5250,groundY-40]
+  ].forEach(([x,y])=>coins.push({x,y,r:9,taken:false}));
+
+  const crystals = [
+    {x:2320, y:groundY-440, r:14, taken:false, secret:true},
+    {x:4750, y:groundY-300, r:14, taken:false, secret:false},
+  ];
+
+  const enemies = [
+    {type:"flyer",  x:900,  baseY:groundY-140, amp:60, y:groundY-140, minX:800,  maxX:1350, w:34,h:28, dir:1, speed:65, t:0, alive:true, hp:1},
+    {type:"walker", x:2000, minX:1950, maxX:2200, y:groundY-24, w:34,h:34, dir:1, speed:75, alive:true, hp:1},
+    {type:"guard",  x:3800, minX:3750, maxX:3950, y:groundY-24-46, w:40,h:46, dir:1, speed:50, alive:true, hp:2},
+    {type:"flyer",  x:4700, baseY:groundY-200, amp:70, y:groundY-200, minX:4500, maxX:5050, w:34,h:28, dir:-1, speed:70, t:0, alive:true, hp:1},
+  ];
+
+  const powerups = [
+    {type:"speed", x:1800, y:groundY-40, w:26, h:26, taken:false},
+  ];
+
+  const boxes = [
+    {x:900, y:groundY-200, w:40, h:40, hit:false, points:20},
+    {x:1650, y:groundY-160, w:40, h:40, hit:false, points:20},
+    // resting on the green float stand at x:2200 (the one at x:2550 stays bare)
+    {x:2330, y:groundY-320, w:40, h:40, hit:false, points:25},
+    {x:2750, y:groundY-200, w:40, h:40, hit:false, points:20},
+    {x:3500, y:groundY-240, w:40, h:40, hit:false, points:25},
+    // resting on the green float stand at x:4600
+    {x:4720, y:groundY-300, w:40, h:40, hit:false, points:20},
+    {x:5300, y:groundY-240, w:40, h:40, hit:false, points:25},
+  ];
+
+  const checkpoint = {x:2750, y:groundY-24, w:20, h:60, passed:false};
+  const goal = {x:5650, y:groundY-140, w:36, h:140};
+  const width = 5850;
+
+  return {
+    id:"1-3", name:"Moving Platforms",
+    groundY, width, platforms, coins, crystals, enemies, powerups, boxes, checkpoint, goal,
+    spawn:{x:60,y:groundY-40}, checkpointReached:false,
+  };
+}
+
+/* Level 1-4 "Dark Claw's Gate" — extended boss level with 80+ seconds gameplay */
+function buildLevel_1_4(){
+  const groundY = VH - TILE*2;
+  const platforms = [];
+  platforms.push({x:0,    y:groundY, w:1400, h:TILE*2, type:"ground"});
+  platforms.push({x:400,  y:groundY-160, w:140, h:22, type:"float"});
+  platforms.push({x:400,  y:groundY-300, w:160, h:22, type:"secret"});
+  platforms.push({x:800,  y:groundY-200, w:130, h:22, type:"float"});
+  platforms.push({x:1400, y:groundY, w:1500, h:TILE*2, type:"ground"});
+  platforms.push({x:1900, y:groundY-280, w:300, h:24, type:"float"});
+  platforms.push({x:1800, y:groundY-260, w:24, h:260, type:"gate"}); // Gate blocks passage
+  
+  platforms.push({x:2900, y:groundY, w:800, h:TILE*2, type:"ground"});
+  platforms.push({x:3100, y:groundY-180, w:150, h:22, type:"float"});
+  platforms.push({x:3450, y:groundY-200, w:140, h:22, type:"float"});
+  platforms.push({x:3700, y:groundY, w:900, h:TILE*2, type:"ground"});
+
+  const coins = [];
+  [[250,groundY-40],[300,groundY-40],[350,groundY-40],
+   [450,groundY-200],[500,groundY-200],
+   [1100,groundY-40],[1150,groundY-40],[1200,groundY-40],
+   [1500,groundY-40],[1550,groundY-40],[1600,groundY-40],[1650,groundY-40],
+   [1950,groundY-320],[2050,groundY-320],[2150,groundY-320],
+   [2200,groundY-40],[2250,groundY-40],[2300,groundY-40],
+   [3150,groundY-220],[3250,groundY-220],
+   [3500,groundY-240],[3600,groundY-240],
+   [3850,groundY-40],[3900,groundY-40],[3950,groundY-40],
+   [4250,groundY-40],[4300,groundY-40]
+  ].forEach(([x,y])=>coins.push({x,y,r:9,taken:false}));
+
+  const crystals = [
+    {x:470,  y:groundY-340, r:14, taken:false, secret:true},
+    {x:2050, y:groundY-360, r:14, taken:false, secret:false},
+    {x:4200, y:groundY-40,  r:14, taken:false, secret:false},
+  ];
+
+  const boss = {type:"boss", x:1600, minX:1420, maxX:1780, y:groundY-24-54, w:46, h:54, dir:1, speed:60, alive:true, hp:5};
+
+  const enemies = [
+    {type:"walker", x:650, minX:600, maxX:900,  y:groundY-24, w:34,h:34, dir:1, speed:80, alive:true, hp:1},
+    {type:"flyer",  x:1100, baseY:groundY-180, amp:60, y:groundY-180, minX:950, maxX:1300, w:34,h:28, dir:1, speed:65, t:0, alive:true, hp:1},
+    {type:"walker", x:2500, minX:2450, maxX:2750, y:groundY-24, w:34,h:34, dir:-1, speed:85, alive:true, hp:1},
+    boss,
+    {type:"walker", x:3300, minX:3250, maxX:3600, y:groundY-24, w:34,h:34, dir:1, speed:75, alive:true, hp:1},
+    {type:"flyer",  x:4000, baseY:groundY-150, amp:65, y:groundY-150, minX:3800, maxX:4300, w:34,h:28, dir:-1, speed:70, t:0, alive:true, hp:1},
+  ];
+
+  const boxes = [
+    // resting on the green float stand at x:400 (stand at x:800 stays bare)
+    {x:450, y:groundY-200, w:40, h:40, hit:false, points:20},
+    {x:1300, y:groundY-160, w:40, h:40, hit:false, points:20},
+    // resting on the green float stand at x:1900
+    {x:2030, y:groundY-320, w:40, h:40, hit:false, points:25},
+    {x:3000, y:groundY-180, w:40, h:40, hit:false, points:20},
+    // resting on the green float stand at x:3450 (stand at x:3100 stays bare)
+    {x:3500, y:groundY-240, w:40, h:40, hit:false, points:25},
+    {x:4500, y:groundY-200, w:40, h:40, hit:false, points:25},
+  ];
+
+  const checkpoint = {x:1350, y:groundY-24, w:20, h:60, passed:false};
+  const goal = {x:4900, y:groundY-140, w:36, h:140};
+  const width = 5150;
+
+  return {
+    id:"1-4", name:"Dark Claw's Gate",
+    groundY, width, platforms, coins, crystals, enemies, powerups:[], boxes, checkpoint, goal, boss,
+    spawn:{x:60,y:groundY-40}, checkpointReached:false, _bossToastShown:false,
+  };
+}
+
+/* Worlds 2-20: every level is built from the four world-1 layouts above
+   (Path / Hazard / Moving-Platform / Boss-Gate templates), then scaled up
+   in enemy speed, enemy HP, boss HP and stage length the further you get —
+   so difficulty rises steadily both within a world and across all 20 worlds. */
+const LEVEL_TEMPLATES = [buildLevel_1_1, buildLevel_1_2, buildLevel_1_3, buildLevel_1_4];
+
+function buildScaledLevel(worldNum, levelIdx, name){
+  const base = LEVEL_TEMPLATES[levelIdx-1]();
+  base.id = `${worldNum}-${levelIdx}`;
+  base.name = name;
+
+  const tier = worldNum - 1;                    // 0 (world1) .. 19 (world20)
+  const speedMult = 1 + tier*0.11 + (levelIdx-1)*0.035;
+  const widthMult = 1 + tier*0.035 + (levelIdx-1)*0.01;
+  const hpChance = Math.min(0.15 + tier*0.05, 0.9);
+
+  base.enemies.forEach(e=>{
+    e.speed *= speedMult;
+    if(tier>=1 && Math.random() < hpChance) e.hp = Math.max(e.hp, 2);
+    if(tier>=8 && Math.random() < hpChance*0.6) e.hp = Math.max(e.hp, 3);
+  });
+
+  if(base.boss){
+    base.boss.speed *= speedMult;
+    base.boss.hp = Math.min(3 + Math.round(tier*0.55), 12);
+    base.boss.maxHealth = base.boss.hp;
+  }
+
+  base.width = Math.round(base.width * widthMult);
+  if(worldNum === FINAL_WORLD_ID && levelIdx === 4) base.ultimateBoss = true;
+  return base;
+}
+
+function levelFactory(id){
+  if(id==="1-1") return buildLevel_1_1();
+  if(id==="1-2") return buildLevel_1_2();
+  if(id==="1-3") return buildLevel_1_3();
+  if(id==="1-4") return buildLevel_1_4();
+  const parts = id.split("-");
+  const worldNum = parseInt(parts[0],10);
+  const levelIdx = parseInt(parts[1],10);
+  const w = WORLDS.find(x=>x.id===worldNum);
+  const lv = w && w.levels.find(l=>l.id===id);
+  const name = lv ? lv.name : id;
+  if(!w || !lv || levelIdx<1 || levelIdx>4) return buildLevel_1_1();
+  return buildScaledLevel(worldNum, levelIdx, name);
+}
+
+/* ---------------- Player ---------------- */
+function newPlayer(spawn){
+  return {
+    x:spawn.x, y:spawn.y, w:30, h:40,
+    vx:0, vy:0, onGround:false, facing:1,
+    health:3, maxHealth:3, lives:3,
+    invuln:0, state:"idle", frame:0, frameT:0,
+    speedBoost:0, attackT:0, hurtT:0, celebrate:0,
+    squash:0, stepT:0,
+  };
+}
+let player;
+
+/* ========== ENHANCED: Points & Fireball System ========== */
+const pointsSystem = {
+  points: 0,
+  maxPoints: 500,
+  pointsForLife: 100,
+  lastLifeThreshold: 0,
+  addPoints(amt=10) {
+    this.points = Math.min(this.points + amt, this.maxPoints);
+    
+    // Add life when points reach threshold
+    if (this.points >= this.lastLifeThreshold + this.pointsForLife) {
+      this.lastLifeThreshold += this.pointsForLife;
+      if (player && player.health < player.maxHealth) {
+        player.health++;
+        SFX.power();
+        toast("EXTRA LIFE! +❤️");
+        spawnParticles("sparkle", player.x + player.w/2, player.y, 12);
+      }
+    }
+    updatePointsDisplay();
+  },
+  usePoints(cost=20) {
+    if (this.points >= cost) {
+      this.points -= cost;
+      updatePointsDisplay();
+      return true;
+    }
+    return false;
+  },
+  reset() { 
+    this.points = 0; 
+    this.lastLifeThreshold = 0;
+    updatePointsDisplay(); 
+  }
+};
+
+let fireballs = [];
+class Fireball {
+  constructor(x, y, dir) {
+    this.x = x;
+    this.y = y;
+    this.vx = dir * 350;
+    this.vy = -100;
+    this.life = 2;
+    this.maxLife = 2;
+    this.radius = 6;
+  }
+  update(dt) {
+    this.x += this.vx * dt;
+    this.y += this.vy * dt;
+    this.vy += 900 * dt;
+    this.life -= dt;
+    
+    if (this.life <= 0) return false;
+    if (this.y > VH) return false;
+    
+    // Check enemy collisions
+    if (world && world.enemies) {
+      for (let e of world.enemies) {
+        if (e.type === "walker" || e.type === "flyer" && e.alive) {
+          const dx = this.x - (e.x + e.w/2);
+          const dy = this.y - (e.y + e.h/2);
+          const dist = Math.sqrt(dx*dx + dy*dy);
+          if (dist < this.radius + 15) {
+            e.hp = 0;
+            e.alive = false;
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  }
+  draw() {
+    const a = Math.max(0, this.life / this.maxLife);
+    ctx.save();
+    ctx.globalAlpha = a;
+    ctx.fillStyle = "#ffaa00";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#ffff00";
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+}
+
+function updatePointsDisplay() {
+  const el = document.getElementById("pointsVal");
+  if (el) el.textContent = pointsSystem.points;
+}
+
+function fireFireball() {
+  if (pointsSystem.usePoints(15)) {
+    const fireX = player.x + (player.facing > 0 ? player.w : 0);
+    const fireY = player.y + player.h * 0.3;
+    fireballs.push(new Fireball(fireX, fireY, player.facing));
+  }
+}
+/* ========== END ENHANCED ========== */
+
+/* ----------------Juice: particles + screen shake ---------------- */
+let particles = [];
+let shakeT = 0;
+function addShake(amt){ shakeT = Math.max(shakeT, amt); }
+function spawnParticles(type, x, y, count){
+  for(let i=0;i<count;i++){
+    if(type==="dust"){
+      particles.push({type, x, y, vx:(Math.random()-0.5)*90, vy:-Math.random()*50-10, life:0.35, maxLife:0.35, size:3+Math.random()*3});
+    } else if(type==="sparkle"){
+      const a = Math.random()*Math.PI*2;
+      particles.push({type, x, y, vx:Math.cos(a)*70, vy:Math.sin(a)*70-30, life:0.5, maxLife:0.5, size:2.5+Math.random()*2.5});
+    } else if(type==="poof"){
+      particles.push({type, x, y, vx:(Math.random()-0.5)*160, vy:(Math.random()-0.5)*160-40, life:0.4, maxLife:0.4, size:4+Math.random()*4});
+    }
+  }
+}
+function updateParticles(dt){
+  for(let i=particles.length-1;i>=0;i--){
+    const pt = particles[i];
+    pt.life -= dt;
+    if(pt.life<=0){ particles.splice(i,1); continue; }
+    pt.x += pt.vx*dt; pt.y += pt.vy*dt;
+    if(pt.type!=="sparkle") pt.vy += 340*dt;
+  }
+}
+function drawParticles(){
+  for(const pt of particles){
+    const a = Math.max(0, pt.life/pt.maxLife);
+    ctx.save();
+    ctx.globalAlpha = a;
+    if(pt.type==="dust") ctx.fillStyle="rgba(255,255,255,.85)";
+    else if(pt.type==="sparkle") ctx.fillStyle="#ffe27a";
+    else ctx.fillStyle="rgba(139,74,156,.9)";
+    ctx.beginPath(); ctx.arc(pt.x,pt.y,Math.max(0.5,pt.size*a+0.8),0,7); ctx.fill();
+    ctx.restore();
+  }
+}
+
+/* idle "attract mode" background scroll, used behind the translucent main menu */
+let idleScroll = 0;
+
+/* ---------------- Level lifecycle ---------------- */
+function startLevel(id){
+  world = levelFactory(id);
+  player = newPlayer(world.spawn);
+  camera.x = 0;
+  particles = [];
+  fireballs = [];
+  shakeT = 0;
+  pointsSystem.reset();
+  initWeather();
+  state.level = id;
+  state.elapsed = 0;
+  state.score = 0;
+  state.coinsCollected = 0;
+  state.mode = "playing";
+  state._autoPaused = false;
+  setPlayingUI(true);
+  showScreen(null);
+  updateHUD();
+  startMusic(id, true);
+  tryLockLandscape();
+  requestWakeLock();
+}
+
+function respawnAtCheckpoint(){
+  const sp = world.checkpointReached ? {x:world.checkpoint.x, y:world.checkpoint.y-20} : world.spawn;
+  player.x = sp.x; player.y = sp.y; player.vx=0; player.vy=0;
+  player.health = player.maxHealth;
+  player.invuln = 1.5;
+}
+
+function pauseGame(auto){
+  if(state.mode!=="playing") return;
+  state.mode = "paused";
+  state._autoPaused = !!auto;
+  setPlayingUI(false);
+  stopMusic();
+  releaseWakeLock();
+  showScreen("pauseMenu");
+}
+function resumeGame(){
+  state.mode = "playing";
+  state._autoPaused = false;
+  setPlayingUI(true);
+  showScreen(null);
+  startMusic(state.level);
+  tryLockLandscape();
+  requestWakeLock();
+}
+
+function loseLife(){
+  SFX.hurt();
+  player.lives--;
+  if(player.lives<=0){
+    endGame(false);
+  } else {
+    respawnAtCheckpoint();
+  }
+}
+
+function endGame(won){
+  state.mode = won ? "victory" : "gameover";
+  setPlayingUI(false);
+  stopMusic();
+  releaseWakeLock();
+  save.highScore = Math.max(save.highScore||0, state.score);
+  persist();
+  if(won){
+    document.getElementById("vScore").textContent = state.score;
+    showScreen("victoryScreen");
+  } else {
+    SFX.gameOver();
+    document.getElementById("goScore").textContent = state.score;
+    showScreen("gameOverScreen");
+  }
+}
+
+function completeLevel(){
+  state.mode = "levelcomplete";
+  setPlayingUI(false);
+  stopMusic();
+  releaseWakeLock();
+  SFX.levelComplete();
+  save.completed[world.id] = true;
+  // ULTIMATE WINNER BONUS: +20 points for completing the true final boss
+  if(world.id === FINAL_LEVEL_ID){
+    state.score += 20; 
+    toast("ULTIMATE WINNER! +20 BONUS!"); 
+  }
+  save.highScore = Math.max(save.highScore||0, state.score);
+  // unlock next level: next level in this world, or level 1 of the next world
+  // if this was that world's last level (fixes the old within-world-only unlock).
+  let nextId = null;
+  const wIdx = WORLDS.findIndex(w=>w.levels.some(l=>l.id===world.id));
+  if(wIdx>=0){
+    const w = WORLDS[wIdx];
+    const lIdx = w.levels.findIndex(l=>l.id===world.id);
+    if(lIdx>=0 && lIdx+1 < w.levels.length){
+      nextId = w.levels[lIdx+1].id;
+    } else if(wIdx+1 < WORLDS.length){
+      nextId = WORLDS[wIdx+1].levels[0].id;
+    }
+    if(nextId) save.unlocked[nextId] = true;
+  }
+  // only offer "Next Level" if that level actually has a playable build
+  state.nextLevelId = null;
+  if(nextId){
+    for(const w of WORLDS){
+      const lv = w.levels.find(l=>l.id===nextId);
+      if(lv && lv.playable){ state.nextLevelId = nextId; break; }
+    }
+  }
+  persist();
+  document.getElementById("lcScore").textContent = state.score;
+  document.getElementById("lcCoins").textContent = state.coinsCollected;
+  document.getElementById("lcTime").textContent = Math.floor(state.elapsed);
+  document.getElementById("nextLevelBtn").textContent = state.nextLevelId ? "NEXT LEVEL ▶" : "🎉 FINISH";
+  showScreen("levelCompleteScreen");
+}
+
+/* ---------------- Camera ---------------- */
+const camera = { x:0 };
+
+/* ---------------- Collision helpers ---------------- */
+function aabb(a,b){ return a.x < b.x+b.w && a.x+a.w > b.x && a.y < b.y+b.h && a.y+a.h > b.y; }
+
+/* ---------------- Update ---------------- */
+let lastTime = performance.now();
+function tick(now){
+  requestAnimationFrame(tick);
+  let dt = (now-lastTime)/1000;
+  lastTime = now;
+  dt = Math.min(dt, 1/30);
+
+  if(state.mode==="playing") update(dt);
+  else idleScroll += dt*24;
+  render();
+}
+requestAnimationFrame(tick);
+
+function update(dt){
+  state.elapsed += dt;
+
+  updateWeather(dt);
+  updateMovingPlatforms(dt);
+
+  // ---- horizontal input / physics ----
+  const maxSpeed = MOVE_MAX * (player.speedBoost>0 ? 1.6 : 1);
+  if(input.left && !input.right){
+    player.vx -= MOVE_ACCEL*dt;
+    player.facing = -1;
+  } else if(input.right && !input.left){
+    player.vx += MOVE_ACCEL*dt;
+    player.facing = 1;
+  } else {
+    // friction
+    if(player.vx>0) player.vx = Math.max(0, player.vx-FRICTION*dt);
+    else if(player.vx<0) player.vx = Math.min(0, player.vx+FRICTION*dt);
+  }
+  player.vx = Math.max(-maxSpeed, Math.min(maxSpeed, player.vx));
+
+  // jump
+  if(input.jumpPressed && player.onGround){
+    player.vy = JUMP_VELOCITY;
+    player.onGround = false;
+    player.squash = -6;
+    spawnParticles("dust", player.x+player.w/2, player.y+player.h, 4);
+    SFX.jump();
+  }
+  input.jumpPressed = false;
+
+  // action / attack / fireball
+  if(input.actionPressed && player.attackT<=0){
+    player.attackT = 0.28;
+    fireFireball();
+  }
+  input.actionPressed = false;
+  if(player.attackT>0) player.attackT -= dt;
+  
+  // Update fireballs
+  fireballs = fireballs.filter(f => f.update(dt));
+
+  // gravity (holding the down direction fast-falls, like a ground-pound dive)
+  player.vy += GRAVITY*dt;
+  if(input.down && !player.onGround) player.vy += 1500*dt;
+  player.vy = Math.min(player.vy, (input.down && !player.onGround) ? 1900 : 1400);
+
+  // ---- move & collide X ----
+  player.x += player.vx*dt;
+  resolvePlatformsX();
+  // ---- move & collide Y ----
+  const wasOnGround = player.onGround;
+  const fallSpeed = player.vy;
+  player.onGround = false;
+  player.y += player.vy*dt;
+  resolvePlatformsY();
+  // carry player along with whatever moving platform they're standing on
+  if(landedPlatform && landedPlatform.type==="moveH"){
+    player.x += landedPlatform.dx || 0;
+  }
+  if(!wasOnGround && player.onGround){
+    player.squash = Math.min(9, 3 + fallSpeed*0.01);
+    spawnParticles("dust", player.x+player.w/2, player.y+player.h, 6);
+  }
+  // footstep dust while running
+  if(player.onGround && Math.abs(player.vx)>60){
+    player.stepT -= dt;
+    if(player.stepT<=0){
+      player.stepT = player.speedBoost>0 ? 0.09 : 0.15;
+      spawnParticles("dust", player.x+player.w/2, player.y+player.h, 1);
+    }
+  }
+  player.squash += (0-player.squash)*Math.min(1,dt*10);
+  if(shakeT>0) shakeT = Math.max(0, shakeT-dt*3);
+  updateParticles(dt);
+
+  // world bounds
+  player.x = Math.max(0, Math.min(player.x, world.width-player.w));
+  if(player.y > VH+200){ // fell into pit
+    loseLife();
+  }
+
+  if(player.speedBoost>0) player.speedBoost -= dt;
+  if(player.invuln>0) player.invuln -= dt;
+  if(player.hurtT>0) player.hurtT -= dt;
+
+  updatePlayerAnim(dt);
+  updateEnemies(dt);
+  updateCollectibles();
+  updateBoxes();
+  updateCheckpointAndGoal();
+
+  // camera follow
+  const targetCamX = player.x - VW/2 + player.w/2;
+  camera.x += (targetCamX - camera.x) * Math.min(1, 8*dt);
+  camera.x = Math.max(0, Math.min(camera.x, world.width-VW));
+
+  updateHUD();
+}
+
+function updateMovingPlatforms(dt){
+  if(!world) return;
+  for(const p of world.platforms){
+    if(p.type==="moveH"){
+      const prevX = p.x;
+      p.x += p.dir*p.speed*dt;
+      if(p.x < p.minX){ p.x = p.minX; p.dir = 1; }
+      if(p.x > p.maxX){ p.x = p.maxX; p.dir = -1; }
+      p.dx = p.x - prevX; p.dy = 0;
+    } else if(p.type==="moveV"){
+      const prevY = p.y;
+      p.y += p.dir*p.speed*dt;
+      if(p.y < p.minY){ p.y = p.minY; p.dir = 1; }
+      if(p.y > p.maxY){ p.y = p.maxY; p.dir = -1; }
+      p.dy = p.y - prevY; p.dx = 0;
+    }
+  }
+}
+
+function gateBlocked(p){
+  // a "gate" platform stops blocking collision once the level's boss is defeated
+  return p.type==="gate" && world.boss && !world.boss.alive;
+}
+
+let landedPlatform = null;
+function resolvePlatformsX(){
+  for(const p of world.platforms){
+    if(gateBlocked(p)) continue;
+    if(aabb(player,p)){
+      if(player.vx>0) player.x = p.x - player.w;
+      else if(player.vx<0) player.x = p.x + p.w;
+      player.vx = 0;
+    }
+  }
+}
+function resolvePlatformsY(){
+  landedPlatform = null;
+  for(const p of world.platforms){
+    if(gateBlocked(p)) continue;
+    if(aabb(player,p)){
+      if(player.vy>0){ // falling onto top
+        player.y = p.y - player.h;
+        player.vy = 0;
+        player.onGround = true;
+        landedPlatform = p;
+      } else if(player.vy<0){ // hit head
+        player.y = p.y + p.h;
+        player.vy = 0;
+      }
+    }
+  }
+}
+
+function updatePlayerAnim(dt){
+  player.frameT += dt;
+  const cycle = player.speedBoost>0 ? 0.07 : 0.10;
+  if(player.frameT>cycle){ player.frameT=0; player.frame=(player.frame+1)%4; }
+  if(!player.onGround){
+    player.state = player.vy<0 ? "jump" : "fall";
+  } else if(player.attackT>0){
+    player.state = "attack";
+  } else if(Math.abs(player.vx)>20){
+    player.state = "run";
+  } else {
+    player.state = "idle";
+  }
+  if(player.hurtT>0) player.state = "hurt";
+}
+
+const ARMORED_TYPES = new Set(["guard","boss"]); // can't be stomped, need the attack button
+let combo = 0, comboTimer = 0;
+
+function updateEnemies(dt){
+  for(const e of world.enemies){
+    if(!e.alive) continue;
+    if(e.type==="walker" || e.type==="guard" || e.type==="boss"){
+      e.x += e.dir*e.speed*dt;
+      if(e.x<e.minX){ e.x=e.minX; e.dir=1; }
+      if(e.x+e.w>e.maxX){ e.x=e.maxX-e.w; e.dir=-1; }
+    } else if(e.type==="flyer"){
+      e.t += dt;
+      e.x += e.dir*e.speed*dt;
+      if(e.x<e.minX){ e.x=e.minX; e.dir=1; }
+      if(e.x+e.w>e.maxX){ e.x=e.maxX-e.w; e.dir=-1; }
+      e.y = e.baseY + Math.sin(e.t*3)*e.amp*0.4;
+    }
+
+    const eb = {x:e.x,y:e.y,w:e.w,h:e.h};
+    if(player.invuln<=0 && (player.invincible===undefined || player.invincible<=0) && aabb(player,eb)){
+      const stomping = player.vy>0 && (player.y+player.h) < (e.y+e.h*0.55);
+      if(stomping && !ARMORED_TYPES.has(e.type)){
+        defeatEnemy(e); player.vy = -420; SFX.enemyDown(); 
+        combo++; comboTimer = 2;
+        const bonusScore = Math.min(combo * 100, 500);
+        state.score += bonusScore; 
+        player.invuln=0.4;
+        if(combo > 1) toast(`🔥 COMBO x${combo}! +${bonusScore}`);
+      } else if(player.attackT>0){
+        e.hp -= 1;
+        if(e.hp<=0){
+          defeatEnemy(e); SFX.enemyDown();
+          combo++;
+          if(e.type==="boss"){ 
+            state.score+=1000; 
+            toast("🏆 BOSS DEFEATED! GATE OPENED!"); 
+            addShake(1.2); 
+          } else {
+            state.score += Math.min(combo * 100, 300);
+          }
+        }
+        player.invuln = 0.5;
+      } else if(player.shield && player.shield > 0){
+        player.shield -= 1;
+        player.vx = -e.dir*180;
+        SFX.hit();
+        toast("🛡️ Shield absorbed hit!");
+      } else {
+        player.hurtT = 0.35;
+        player.health -= 1;
+        player.invuln = 1.1;
+        player.vx = -e.dir*180;
+        player.vy = -280;
+        addShake(0.7);
+        combo = 0;
+        if(player.health<=0) loseLife();
+      }
+    }
+  }
+  
+  comboTimer -= dt;
+  if(comboTimer <= 0) combo = 0;
+}
+function defeatEnemy(e){ e.alive=false; spawnParticles("poof", e.x+e.w/2, e.y+e.h/2, 10); }
+
+function updateCollectibles(){
+  for(const c of world.coins){
+    if(c.taken) continue;
+    if(dist(player.x+player.w/2, player.y+player.h/2, c.x, c.y) < c.r+18){
+      c.taken = true; state.score+=10; state.coinsCollected++; SFX.coin();
+      pointsSystem.addPoints(5);
+      spawnParticles("sparkle", c.x, c.y, 6);
+    }
+  }
+  for(const cr of world.crystals){
+    if(cr.taken) continue;
+    if(dist(player.x+player.w/2, player.y+player.h/2, cr.x, cr.y) < cr.r+20){
+      cr.taken = true; state.score += cr.secret ? 250 : 100; SFX.crystal();
+      pointsSystem.addPoints(cr.secret ? 50 : 25);
+      spawnParticles("sparkle", cr.x, cr.y, 14);
+      toast(cr.secret ? "SECRET FOUND! +250" : "CRYSTAL! +100");
+    }
+  }
+  for(const pu of world.powerups){
+    if(pu.taken) continue;
+    if(aabb(player, pu)){
+      pu.taken = true; SFX.power();
+      spawnParticles("sparkle", pu.x+pu.w/2, pu.y+pu.h/2, 15);
+      if(pu.type==="speed"){ player.speedBoost = 8; toast("⚡ SPEED BOOST! 2x FASTER"); }
+      else if(pu.type==="shield"){ player.shield = 300; toast("🛡️ SHIELD ACTIVATED"); }
+      else if(pu.type==="mushroom"){ player.size = 2; player.height *= 1.5; toast("🍄 GROW POWER!"); }
+      else if(pu.type==="flower"){ player.firepower = 300; toast("🌹 FIRE POWER!"); }
+      else if(pu.type==="star"){ player.invincible = 600; toast("⭐ INVINCIBLE MODE!"); }
+    }
+  }
+}
+
+/* ========== Point-coins: sit on stands, collect on touch like regular coins ========== */
+function updateBoxes(){
+  if(!world.boxes) return;
+  for(const box of world.boxes){
+    if(box.hit) continue;
+    if(aabb(player, box)){
+      box.hit = true;
+      pointsSystem.addPoints(box.points);
+      state.score += box.points * 2;
+      SFX.coin();
+      spawnParticles("sparkle", box.x + box.w/2, box.y + box.h/2, 8);
+      toast(`+${box.points * 2} PTS`);
+    }
+  }
+}
+/* ========== END POINT-COINS ========== */
+
+function updateCheckpointAndGoal(){
+  const cp = world.checkpoint;
+  if(!world.checkpointReached && player.x > cp.x){
+    world.checkpointReached = true;
+    SFX.checkpoint();
+    toast("Checkpoint!");
+  }
+  if(world.boss && world.boss.alive && player.x > world.boss.x + 260 && !world._bossToastShown){
+    world._bossToastShown = true;
+    toast("Defeat Dark Claw to open the gate!");
+  }
+
+  const g = world.goal;
+  if(player.x+player.w > g.x){
+    state.score += 500;
+    completeLevel();
+  }
+}
+
+function dist(x1,y1,x2,y2){ const dx=x1-x2, dy=y1-y2; return Math.sqrt(dx*dx+dy*dy); }
+
+/* ---------------- HUD ---------------- */
+function updateHUD(){
+  document.getElementById("hearts").innerHTML =
+    "❤️".repeat(Math.max(player.health,0)) + "🖤".repeat(Math.max(player.maxHealth-player.health,0)) +
+    `  x${player.lives}`;
+  document.getElementById("scoreVal").textContent = state.score;
+  document.getElementById("timeVal").textContent = Math.floor(state.elapsed);
+  document.getElementById("coinVal").textContent = state.coinsCollected;
+  
+  // Combo display
+  let comboText = "";
+  let hasPowerup = false;
+  if(combo > 1) { comboText = `🔥 COMBO x${combo}`; hasPowerup = true; }
+  if(player.shield && player.shield > 0) { comboText += ` 🛡️`; hasPowerup = true; }
+  if(player.invincible && player.invincible > 0) { comboText += ` ⭐`; hasPowerup = true; }
+  if(player.speedBoost && player.speedBoost > 0) { comboText += ` ⚡`; hasPowerup = true; }
+  if(player.firepower && player.firepower > 0) { comboText += ` 🌹`; hasPowerup = true; }
+  if(player.size && player.size > 1) { comboText += ` 🍄`; hasPowerup = true; }
+  
+  const comboDis = document.getElementById("comboDisplay");
+  if(comboDis) comboDis.style.display = hasPowerup ? "block" : "none";
+  
+  const comboEl = document.getElementById("comboVal");
+  if(comboEl) comboEl.textContent = comboText || "🔥 COMBO";
+}
+
+/* ---------------- Rendering ---------------- */
+function render(){
+  ctx.clearRect(0,0,VW,VH);
+  ctx.save();
+  if(shakeT>0){
+    ctx.translate((Math.random()-0.5)*shakeT*12, (Math.random()-0.5)*shakeT*12);
+  }
+  drawSky();
+  if(world){
+    ctx.save();
+    ctx.translate(-camera.x,0);
+    drawParallax();
+    drawPlatforms();
+    drawCheckpointGoal();
+    drawCollectibles();
+    drawEnemies();
+    drawParticles();
+    if(player) drawPlayer();
+    fireballs.forEach(fb => fb.draw());
+    ctx.restore();
+    drawFog();
+    drawWeather();
+  } else {
+    drawMenuScene();
+  }
+  ctx.restore();
+}
+
+function drawSky(){
+  const pal = TIME_PALETTE[atmo().timeOfDay] || TIME_PALETTE.day;
+  const g = ctx.createLinearGradient(0,0,0,VH);
+  g.addColorStop(0,pal.top); g.addColorStop(1,pal.bottom);
+  ctx.fillStyle=g; ctx.fillRect(0,0,VW,VH);
+
+  if(pal.stars){
+    for(const s of STAR_FIELD){
+      const tw = 0.5+0.5*Math.sin((state.elapsed||idleScroll*0.05)*2+s.seed);
+      ctx.fillStyle = `rgba(255,255,255,${0.25+0.6*tw})`;
+      ctx.fillRect(s.x, s.y, 2, 2);
+    }
+  }
+
+  if(pal.body==="sun"){
+    ctx.fillStyle=pal.glow; ctx.beginPath(); ctx.arc(VW-90,80,62,0,7); ctx.fill();
+    ctx.fillStyle=pal.sunColor; ctx.beginPath(); ctx.arc(VW-90,80,46,0,7); ctx.fill();
+  } else if(pal.body==="moon"){
+    ctx.fillStyle=pal.glow; ctx.beginPath(); ctx.arc(VW-90,80,56,0,7); ctx.fill();
+    ctx.fillStyle=pal.sunColor; ctx.beginPath(); ctx.arc(VW-90,80,38,0,7); ctx.fill();
+    ctx.fillStyle=pal.top; ctx.beginPath(); ctx.arc(VW-90+14,80-8,32,0,7); ctx.fill();
+  }
+
+  if(atmo().lightning && flashT>0){
+    ctx.fillStyle = `rgba(255,255,255,${flashT*0.6})`;
+    ctx.fillRect(0,0,VW,VH);
+  }
+}
+function drawParallax(){
+  if(!world) return;
+  const th = theme();
+  const worldNum = currentWorldNum();
+  
+  // distant mountain silhouettes (slowest layer)
+  ctx.fillStyle = th.mountain;
+  const mSpacing = 480;
+  for(let i=-1;i<Math.ceil(world.width/mSpacing)+2;i++){
+    const mx = i*mSpacing - (camera.x*0.15)%mSpacing;
+    ctx.beginPath();
+    ctx.moveTo(mx-240, world.groundY+40);
+    ctx.lineTo(mx-30, world.groundY-170);
+    ctx.lineTo(mx+150, world.groundY-70);
+    ctx.lineTo(mx+240, world.groundY+40);
+    ctx.closePath(); ctx.fill();
+  }
+  
+  // World-specific decorative elements
+  if(worldNum === 1){
+    // Green Valley - Draw trees
+    ctx.fillStyle="#2d5a2d";
+    for(let i=0; i<Math.ceil(world.width/400)+2; i++){
+      const tx = i*400 - (camera.x*0.3)%400;
+      drawTree(tx, world.groundY-100, 30, "#2d5a2d", "#8b4513");
+    }
+  } else if(worldNum === 2){
+    // Crystal Cave - Draw floating crystals
+    ctx.fillStyle="#00ffff";
+    for(let i=0; i<Math.ceil(world.width/500)+2; i++){
+      const cx = i*500 - (camera.x*0.35)%500;
+      drawCrystal(cx, world.groundY-200, 20, "#00ffff", "#0088ff");
+    }
+  } else if(worldNum === 3){
+    // Desert - Draw cacti and rocks
+    ctx.fillStyle="#ff6b35";
+    for(let i=0; i<Math.ceil(world.width/450)+2; i++){
+      const dx = i*450 - (camera.x*0.32)%450;
+      if(i%2===0) drawCactus(dx, world.groundY-80, 25, "#ff6b35");
+      else drawDesertRock(dx, world.groundY-60, 20, "#ff9944");
+    }
+  } else if(worldNum === 4){
+    // Sky Kingdom - Draw floating islands/platforms
+    ctx.fillStyle="#b0d4ff";
+    for(let i=0; i<Math.ceil(world.width/500)+2; i++){
+      const sx = i*500 - (camera.x*0.28)%500;
+      drawSkyIsland(sx, world.groundY-300, 60, 15, "#b0d4ff");
+    }
+  } else if(worldNum === 5){
+    // Dark Fortress - Draw evil spires
+    ctx.fillStyle="#6b0000";
+    for(let i=0; i<Math.ceil(world.width/400)+2; i++){
+      const fx = i*400 - (camera.x*0.36)%400;
+      drawSpire(fx, world.groundY-150, 25, "#6b0000", "#ff1493");
+    }
+  } else {
+    // Worlds 6-20: cycle the five silhouette styles above, recolored with
+    // each world's own theme so every later stage still reads as its own
+    // distinct place rather than a reskinned copy of an earlier one.
+    const shape = worldNum % 5;
+    const spacing = 420 + (worldNum%4)*22;
+    for(let i=0; i<Math.ceil(world.width/spacing)+2; i++){
+      const dx = i*spacing - (camera.x*(0.28+(worldNum%3)*0.03))%spacing;
+      if(shape===1) drawTree(dx, world.groundY-100, 28, th.hill, th.accent2);
+      else if(shape===2) drawCrystal(dx, world.groundY-190, 20, th.accent1, th.accent2);
+      else if(shape===3) drawDesertRock(dx, world.groundY-60, 22, th.accent1);
+      else if(shape===4) drawSkyIsland(dx, world.groundY-280, 60, 15, th.accent1);
+      else drawSpire(dx, world.groundY-150, 24, th.mountain, th.accent2);
+    }
+  }
+  
+  // clouds - made more vibrant per world
+  if(worldNum === 2) ctx.fillStyle="rgba(200, 150, 255, 0.9)"; // Purple clouds for cave
+  else if(worldNum === 3) ctx.fillStyle="rgba(255, 200, 100, 0.8)"; // Golden clouds for desert
+  else if(worldNum === 4) ctx.fillStyle="rgba(255, 255, 255, 0.95)"; // Bright clouds for sky
+  else if(worldNum === 5) ctx.fillStyle="rgba(100, 50, 100, 0.7)"; // Dark purple clouds
+  else if(worldNum === 1) ctx.fillStyle="rgba(255,255,255,.85)"; // White clouds for green valley
+  else {
+    const cloudTints=["rgba(255,255,255,.85)","rgba(200,230,255,.85)","rgba(255,225,190,.8)","rgba(230,200,255,.8)"];
+    ctx.fillStyle = cloudTints[worldNum%cloudTints.length];
+  }
+  
+  for(let i=0;i<14;i++){
+    const cx = (i*420 - camera.x*0.25) % (world.width+500);
+    const bx = cx<0? cx+world.width+500 : cx;
+    cloud(bx*0.4 + 100, 70+ (i%3)*40);
+  }
+  
+  // near hills with accent colors
+  ctx.fillStyle = th.hill;
+  for(let i=0;i<Math.ceil(world.width/300)+2;i++){
+    const hx = i*300 - (camera.x*0.5)%300;
+    ctx.beginPath();
+    ctx.moveTo(hx-150, world.groundY+30);
+    ctx.quadraticCurveTo(hx, world.groundY-70, hx+150, world.groundY+30);
+    ctx.fill();
+  }
+  
+  // Add grass accent line
+  ctx.fillStyle = th.grass;
+  ctx.fillRect(0, world.groundY-2, VW, 4);
+}
+
+// Decorative element functions
+function drawTree(x, y, size, trunkColor, foliageColor){
+  // Trunk
+  ctx.fillStyle = trunkColor;
+  ctx.fillRect(x-size*0.15, y, size*0.3, size*0.8);
+  // Foliage
+  ctx.fillStyle = foliageColor;
+  ctx.beginPath();
+  ctx.arc(x, y-size*0.3, size*0.5, 0, 7);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x-size*0.3, y+size*0.1, size*0.4, 0, 7);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(x+size*0.3, y+size*0.1, size*0.4, 0, 7);
+  ctx.fill();
+}
+
+function drawCrystal(x, y, size, color1, color2){
+  ctx.fillStyle = color1;
+  ctx.beginPath();
+  ctx.moveTo(x, y-size);
+  ctx.lineTo(x+size*0.6, y);
+  ctx.lineTo(x, y+size);
+  ctx.lineTo(x-size*0.6, y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = color2;
+  ctx.lineWidth = 1;
+  ctx.stroke();
+}
+
+function drawCactus(x, y, size, color){
+  ctx.fillStyle = color;
+  // Main body
+  ctx.fillRect(x-size*0.2, y-size, size*0.4, size*1.5);
+  // Arms
+  ctx.fillRect(x-size*0.6, y-size*0.3, size*0.4, size*0.4);
+  ctx.fillRect(x+size*0.2, y-size*0.3, size*0.4, size*0.4);
+  // Spikes
+  ctx.fillStyle="rgba(255, 255, 150, 0.8)";
+  for(let i=0; i<3; i++){
+    ctx.fillRect(x-size*0.15, y-size+i*size*0.4, size*0.05, size*0.1);
+    ctx.fillRect(x+size*0.1, y-size+i*size*0.4, size*0.05, size*0.1);
+  }
+}
+
+function drawDesertRock(x, y, size, color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x-size*0.7, y);
+  ctx.quadraticCurveTo(x-size*0.3, y-size, x, y-size);
+  ctx.quadraticCurveTo(x+size*0.3, y-size, x+size*0.7, y);
+  ctx.quadraticCurveTo(x+size*0.4, y+size*0.5, x-size*0.4, y+size*0.5);
+  ctx.closePath();
+  ctx.fill();
+}
+
+function drawSkyIsland(x, y, w, h, color){
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x-w/2, y);
+  ctx.quadraticCurveTo(x-w/2, y-h, x, y-h-h*0.5);
+  ctx.quadraticCurveTo(x+w/2, y-h, x+w/2, y);
+  ctx.fill();
+  // Add grass on top
+  ctx.fillStyle="#ffff99";
+  ctx.fillRect(x-w/2, y-3, w, 3);
+}
+
+function drawSpire(x, y, size, baseColor, tipColor){
+  ctx.fillStyle = baseColor;
+  ctx.beginPath();
+  ctx.moveTo(x-size*0.4, y+size);
+  ctx.lineTo(x, y-size);
+  ctx.lineTo(x+size*0.4, y+size);
+  ctx.closePath();
+  ctx.fill();
+  // Glowing tip
+  ctx.fillStyle = tipColor;
+  ctx.beginPath();
+  ctx.arc(x, y-size, size*0.3, 0, 7);
+  ctx.fill();
+}
+function cloud(x,y){
+  ctx.beginPath();
+  ctx.arc(x,y,18,0,7); ctx.arc(x+20,y-10,20,0,7); ctx.arc(x+42,y,18,0,7);
+  ctx.fill();
+}
+
+/* Decorative scrolling scene shown behind the translucent main menu. */
+function drawMenuScene(){
+  const th = WORLD_THEME[1];
+  ctx.save();
+  ctx.translate(-(idleScroll%480), 0);
+  ctx.fillStyle = th.mountain;
+  for(let i=-1;i<6;i++){
+    const mx = i*480;
+    ctx.beginPath();
+    ctx.moveTo(mx-240, VH-70); ctx.lineTo(mx-30, VH-260); ctx.lineTo(mx+150, VH-160); ctx.lineTo(mx+240, VH-70);
+    ctx.closePath(); ctx.fill();
+  }
+  ctx.fillStyle="rgba(255,255,255,.8)";
+  for(let i=0;i<5;i++) cloud(i*300+80, 70+(i%3)*36);
+  ctx.fillStyle = th.hill;
+  for(let i=-1;i<6;i++){
+    const hx = i*300;
+    ctx.beginPath();
+    ctx.moveTo(hx-150, VH-84); ctx.quadraticCurveTo(hx, VH-184, hx+150, VH-84);
+    ctx.fill();
+  }
+  ctx.fillStyle = th.ground; ctx.fillRect(-480, VH-84, VW+960, 84);
+  ctx.fillStyle = th.grass; ctx.fillRect(-480, VH-84, VW+960, 14);
+  ctx.restore();
+}
+
+function drawPlatforms(){
+  const th = theme();
+  const worldNum = currentWorldNum();
+  
+  for(const p of world.platforms){
+    if(p.type==="ground"){
+      // Base color varies by world
+      if(worldNum === 2) ctx.fillStyle="#4a3366"; // Crystal cave purple
+      else if(worldNum === 3) ctx.fillStyle="#8b4513"; // Desert brown
+      else if(worldNum === 4) ctx.fillStyle="#6b9bd1"; // Sky blue
+      else if(worldNum === 5) ctx.fillStyle="#2a0a2a"; // Dark fortress
+      else ctx.fillStyle=th.ground;
+      
+      ctx.fillRect(p.x,p.y,p.w,p.h);
+      
+      // Grass layer with world colors
+      ctx.fillStyle=th.grass; 
+      ctx.fillRect(p.x,p.y,p.w,14);
+      
+      // Grass detail
+      ctx.fillStyle="rgba(255,255,255,.22)";
+      for(let gx=p.x+5; gx<p.x+p.w; gx+=20){
+        ctx.beginPath();
+        ctx.moveTo(gx,p.y); ctx.lineTo(gx+2.5,p.y-7); ctx.lineTo(gx+5,p.y);
+        ctx.closePath(); ctx.fill();
+      }
+      ctx.fillStyle="rgba(0,0,0,.12)";
+      for(let gx=p.x; gx<p.x+p.w; gx+=40) ctx.fillRect(gx,p.y+14,2,p.h-14);
+      
+    } else if(p.type==="secret"){
+      // Secret platform with world-specific glow
+      if(worldNum === 2) ctx.fillStyle="#00ffff";
+      else if(worldNum === 3) ctx.fillStyle="#ffd700";
+      else if(worldNum === 4) ctx.fillStyle="#ffff99";
+      else if(worldNum === 5) ctx.fillStyle="#ff1493";
+      else ctx.fillStyle="#c98bd6";
+      
+      roundRect(p.x,p.y,p.w,p.h,6); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,.5)"; ctx.fillRect(p.x,p.y,p.w,4);
+      
+      // Glow effect
+      ctx.strokeStyle="rgba(255,255,255,.3)"; ctx.lineWidth=2;
+      roundRect(p.x,p.y,p.w,p.h,6); ctx.stroke();
+      
+    } else if(p.type==="moveH"){
+      // Moving platforms with world colors
+      if(worldNum === 2) ctx.fillStyle="#7b68ee";
+      else if(worldNum === 3) ctx.fillStyle="#ff8c00";
+      else if(worldNum === 4) ctx.fillStyle="#00bfff";
+      else if(worldNum === 5) ctx.fillStyle="#dc143c";
+      else ctx.fillStyle="#ff9f4d";
+      
+      roundRect(p.x,p.y,p.w,p.h,6); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,.6)"; ctx.fillRect(p.x,p.y,p.w,5);
+      ctx.fillStyle="rgba(0,0,0,.15)";
+      for(let gx=p.x+8; gx<p.x+p.w; gx+=16) ctx.fillRect(gx,p.y+6,3,p.h-8);
+    } else if(p.type==="moveV"){
+      ctx.fillStyle="#4d9fff"; roundRect(p.x,p.y,p.w,p.h,6); ctx.fill();
+      ctx.fillStyle="#9ecfff"; ctx.fillRect(p.x,p.y,p.w,5);
+      ctx.fillStyle="rgba(0,0,0,.15)";
+      for(let gx=p.x+8; gx<p.x+p.w; gx+=16) ctx.fillRect(gx,p.y+6,3,p.h-8);
+    } else if(p.type==="gate"){
+      if(gateBlocked(p)){
+        ctx.strokeStyle="rgba(255,255,255,.35)"; ctx.lineWidth=3;
+        ctx.strokeRect(p.x,p.y,p.w,p.h);
+      } else {
+        ctx.fillStyle="#241626"; ctx.fillRect(p.x,p.y,p.w,p.h);
+        ctx.fillStyle="#5b2140"; ctx.fillRect(p.x+4,p.y+4,Math.max(p.w-8,2),p.h-8);
+        ctx.strokeStyle="#e8412c"; ctx.lineWidth=2; ctx.strokeRect(p.x+4,p.y+4,Math.max(p.w-8,2),p.h-8);
+      }
+    } else {
+      ctx.fillStyle="#6b8f3c"; roundRect(p.x,p.y,p.w,p.h,6); ctx.fill();
+      ctx.fillStyle="#95c463"; ctx.fillRect(p.x,p.y,p.w,5);
+    }
+  }
+}
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r);
+  ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);
+  ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+function drawCheckpointGoal(){
+  const cp = world.checkpoint;
+  ctx.fillStyle = world.checkpointReached ? "#4fd3c4" : "#9aa0c2";
+  ctx.fillRect(cp.x, cp.y-cp.h, 6, cp.h);
+  ctx.beginPath(); ctx.moveTo(cp.x+6,cp.y-cp.h);
+  ctx.lineTo(cp.x+34,cp.y-cp.h+14); ctx.lineTo(cp.x+6,cp.y-cp.h+28); ctx.closePath();
+  ctx.fill();
+
+  drawWelcomeHomeGoal(world.goal);
+}
+
+/* Finish line — a cosy "WELCOME HOME" archway the player runs through
+   to complete the level, instead of a plain flag. */
+function drawWelcomeHomeGoal(g){
+  const cx = g.x + g.w/2;      // arch centerline
+  const baseY = g.y + g.h;     // ground level
+  const postW = 10;
+  const postH = g.h;
+  const roofSpan = 70;         // roof is wider than the posts
+  const roofY = g.y - 26;
+
+  ctx.save();
+
+  // soft warm glow behind the doorway
+  const glow = ctx.createRadialGradient(cx, baseY-postH*0.55, 6, cx, baseY-postH*0.55, 70);
+  glow.addColorStop(0, "rgba(255,214,120,.55)");
+  glow.addColorStop(1, "rgba(255,214,120,0)");
+  ctx.fillStyle = glow;
+  ctx.fillRect(cx-80, roofY-10, 160, g.h+60);
+
+  // left & right posts
+  ctx.fillStyle = "#8a5a2b";
+  ctx.fillRect(g.x-postW*0.5, g.y, postW, postH);
+  ctx.fillRect(g.x+g.w-postW*0.5, g.y, postW, postH);
+  ctx.fillStyle = "#6b4420";
+  ctx.fillRect(g.x-postW*0.5, g.y, postW, 6);
+  ctx.fillRect(g.x+g.w-postW*0.5, g.y, postW, 6);
+
+  // glowing open "doorway" between the posts — this is what the player runs into
+  const doorGrad = ctx.createLinearGradient(0, g.y, 0, baseY);
+  doorGrad.addColorStop(0, "#fff2c9");
+  doorGrad.addColorStop(1, "#ffcf6b");
+  ctx.fillStyle = doorGrad;
+  roundRect(g.x+postW*0.5, g.y+6, g.w-postW, g.h-6, 10);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255,255,255,.8)"; ctx.lineWidth = 2;
+  roundRect(g.x+postW*0.5, g.y+6, g.w-postW, g.h-6, 10);
+  ctx.stroke();
+
+  // pitched roof over the doorway
+  ctx.fillStyle = "#c0392b";
+  ctx.beginPath();
+  ctx.moveTo(cx-roofSpan/2, g.y+8);
+  ctx.lineTo(cx, roofY);
+  ctx.lineTo(cx+roofSpan/2, g.y+8);
+  ctx.lineTo(cx+roofSpan/2-8, g.y+8);
+  ctx.lineTo(cx, roofY+10);
+  ctx.lineTo(cx-roofSpan/2+8, g.y+8);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "#7a2015"; ctx.lineWidth = 2; ctx.stroke();
+
+  // little chimney + puff of smoke, for a homely touch
+  ctx.fillStyle = "#8a5a2b";
+  ctx.fillRect(cx+roofSpan*0.18, roofY+2, 10, 14);
+  ctx.fillStyle = "rgba(255,255,255,.55)";
+  ctx.beginPath();
+  ctx.arc(cx+roofSpan*0.18+5, roofY-6, 5, 0, 7);
+  ctx.arc(cx+roofSpan*0.18+9, roofY-14, 4, 0, 7);
+  ctx.fill();
+
+  // hanging wooden "WELCOME HOME" sign, swaying gently under the roof
+  const sway = Math.sin(perfNow()*0.0018 + g.x*0.01) * 3;
+  ctx.save();
+  ctx.translate(cx + sway, g.y + 26);
+  ctx.strokeStyle = "#5a3a1a"; ctx.lineWidth = 2;
+  ctx.beginPath(); ctx.moveTo(-16,-22); ctx.lineTo(-10,-2); ctx.moveTo(16,-22); ctx.lineTo(10,-2); ctx.stroke();
+  ctx.fillStyle = "#a9740a";
+  roundRect(-34,-2,68,26,5); ctx.fill();
+  ctx.strokeStyle = "#7a4f06"; ctx.lineWidth = 2;
+  roundRect(-34,-2,68,26,5); ctx.stroke();
+  ctx.fillStyle = "#fff3d0";
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  ctx.font = "bold 8px 'Trebuchet MS', sans-serif";
+  ctx.fillText("WELCOME", 0, 6);
+  ctx.font = "bold 9px 'Trebuchet MS', sans-serif";
+  ctx.fillText("HOME", 0, 16);
+  ctx.restore();
+
+  // heart above the doorway + small flower pots at the base — homely details
+  ctx.fillStyle = "#ff6b9d";
+  ctx.save(); ctx.translate(cx, g.y-4);
+  ctx.beginPath();
+  ctx.moveTo(0,4);
+  ctx.bezierCurveTo(-8,-6,-16,2,0,12);
+  ctx.bezierCurveTo(16,2,8,-6,0,4);
+  ctx.fill();
+  ctx.restore();
+
+  [g.x-postW*0.5-6, g.x+g.w-postW*0.5+6].forEach(px=>{
+    ctx.fillStyle = "#c97c1c";
+    ctx.beginPath(); ctx.moveTo(px-6,baseY); ctx.lineTo(px+6,baseY); ctx.lineTo(px+4,baseY-10); ctx.lineTo(px-4,baseY-10); ctx.closePath(); ctx.fill();
+    ctx.fillStyle = "#4fae3f";
+    ctx.fillRect(px-1, baseY-16, 2, 8);
+    ["#ff6b9d","#ffd700","#4fd3c4"].forEach((c,i)=>{
+      ctx.fillStyle = c;
+      ctx.beginPath(); ctx.arc(px-4+i*4, baseY-16, 2.4, 0, 7); ctx.fill();
+    });
+  });
+
+  ctx.restore();
+}
+function perfNow(){ return (typeof performance!=="undefined" && performance.now) ? performance.now() : Date.now(); }
+
+function drawCollectibles(){
+  for(const c of world.coins){
+    if(c.taken) continue;
+    ctx.save(); ctx.translate(c.x,c.y);
+    ctx.fillStyle="#ffcf3f"; ctx.beginPath(); ctx.arc(0,0,c.r,0,7); ctx.fill();
+    ctx.strokeStyle="#c98b12"; ctx.lineWidth=2; ctx.stroke();
+    ctx.restore();
+  }
+  for(const cr of world.crystals){
+    if(cr.taken) continue;
+    ctx.save(); ctx.translate(cr.x,cr.y);
+    ctx.fillStyle = cr.secret ? "#e35bd6" : "#4fd3c4";
+    ctx.beginPath();
+    ctx.moveTo(0,-cr.r); ctx.lineTo(cr.r*0.75,0); ctx.lineTo(0,cr.r); ctx.lineTo(-cr.r*0.75,0);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.7)"; ctx.stroke();
+    ctx.restore();
+  }
+  for(const pu of world.powerups){
+    if(pu.taken) continue;
+    ctx.save();
+    ctx.translate(pu.x+pu.w/2, pu.y+pu.h/2);
+    ctx.fillStyle="#ffe27a";
+    roundRect(-pu.w/2,-pu.h/2,pu.w,pu.h,6); ctx.fill();
+    ctx.fillStyle="#a9740a"; ctx.font="bold 16px sans-serif"; ctx.textAlign="center"; ctx.textBaseline="middle";
+    ctx.fillText("S", 0, 1);
+    ctx.restore();
+  }
+  
+  // Draw point-coins — bigger shining coins that rest on their stand
+  if(world.boxes){
+    const t = state.elapsed || 0;
+    for(const box of world.boxes){
+      if(box.hit) continue;
+      const cx = box.x + box.w/2;
+      const cy = box.y + box.h/2;
+      const r = box.w/2 - 2;
+      const bob = Math.sin(t*3 + cx*0.02) * 3;
+      const spin = Math.cos(t*2.2 + cx*0.01);
+
+      ctx.save();
+      ctx.translate(cx, cy + box.h/2 + 4);
+      ctx.globalAlpha *= 0.22; ctx.fillStyle = "#000";
+      ctx.beginPath(); ctx.ellipse(0, 0, r*0.8, 4, 0, 0, 7); ctx.fill();
+      ctx.restore();
+
+      ctx.save();
+      ctx.translate(cx, cy + bob);
+      ctx.scale(Math.max(0.22, Math.abs(spin)), 1);
+
+      // coin rim
+      ctx.fillStyle = "#c98b12";
+      ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
+      // coin face
+      ctx.fillStyle = "#ffe27a";
+      ctx.beginPath(); ctx.arc(0, 0, r-4, 0, 7); ctx.fill();
+      // shine
+      ctx.fillStyle = "rgba(255,255,255,.55)";
+      ctx.beginPath(); ctx.ellipse(-r*0.3, -r*0.35, r*0.3, r*0.15, -0.5, 0, 7); ctx.fill();
+      // value star
+      ctx.fillStyle = "#a9740a";
+      ctx.font = `bold ${Math.floor(r*0.95)}px sans-serif`;
+      ctx.textAlign = "center"; ctx.textBaseline = "middle";
+      ctx.fillText("★", 0, 1);
+
+      ctx.restore();
+    }
+  }
+}
+
+function drawEnemies(){
+  for(const e of world.enemies){
+    if(!e.alive) continue;
+    ctx.save();
+    ctx.globalAlpha*=0.22; ctx.fillStyle="#000";
+    ctx.beginPath(); ctx.ellipse(e.x+e.w/2, e.y+e.h+3, e.w*0.42, 5, 0,0,7); ctx.fill();
+    ctx.restore();
+    ctx.save(); ctx.translate(e.x,e.y);
+    if(e.type==="walker"){
+      ctx.fillStyle="#8b4a9c"; roundRect(0,0,e.w,e.h,8); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(e.w*0.3,e.h*0.35,4,0,7); ctx.arc(e.w*0.7,e.h*0.35,4,0,7); ctx.fill();
+      ctx.fillStyle="#2b1633"; ctx.beginPath(); ctx.arc(e.w*0.3,e.h*0.35,2,0,7); ctx.arc(e.w*0.7,e.h*0.35,2,0,7); ctx.fill();
+    } else if(e.type==="flyer"){
+      ctx.fillStyle="#3f7fe0";
+      ctx.beginPath(); ctx.ellipse(e.w/2,e.h/2,e.w/2,e.h/2,0,0,7); ctx.fill();
+      ctx.fillStyle="rgba(255,255,255,.6)";
+      const wingFlap = Math.sin(e.t*14)*8;
+      ctx.beginPath(); ctx.ellipse(2,e.h/2+wingFlap,10,5,0.3,0,7); ctx.fill();
+      ctx.beginPath(); ctx.ellipse(e.w-2,e.h/2-wingFlap,10,5,-0.3,0,7); ctx.fill();
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(e.w*0.5,e.h*0.4,4,0,7); ctx.fill();
+    } else if(e.type==="guard"){
+      ctx.fillStyle="#3a3f5c"; roundRect(0,0,e.w,e.h,6); ctx.fill();
+      ctx.fillStyle="#e8412c"; ctx.fillRect(4,4,e.w-8,10);
+      ctx.fillStyle="#fff"; ctx.beginPath(); ctx.arc(e.w*0.3,e.h*0.45,4,0,7); ctx.arc(e.w*0.7,e.h*0.45,4,0,7); ctx.fill();
+      ctx.fillStyle="#ffcf3f"; ctx.fillRect(0,e.h-8,e.w,8);
+    } else if(e.type==="boss"){
+      ctx.fillStyle="#1c1024"; roundRect(0,0,e.w,e.h,10); ctx.fill();
+      ctx.fillStyle="#3d1f4d"; roundRect(4,4,e.w-8,e.h-8,8); ctx.fill();
+      // spikes
+      ctx.fillStyle="#1c1024";
+      for(let sx=6; sx<e.w-6; sx+=10){ ctx.beginPath(); ctx.moveTo(sx,4); ctx.lineTo(sx+5,-6); ctx.lineTo(sx+10,4); ctx.fill(); }
+      // glowing eyes
+      ctx.fillStyle="#ff4d4d";
+      ctx.beginPath(); ctx.arc(e.w*0.3,e.h*0.4,5,0,7); ctx.arc(e.w*0.7,e.h*0.4,5,0,7); ctx.fill();
+      ctx.fillStyle="#ffcf3f"; ctx.fillRect(4,e.h-10,e.w-8,8);
+      // HP pips above head
+      ctx.save();
+      ctx.translate(0,-16);
+      for(let i=0;i<e.hp;i++){ ctx.fillStyle="#e8412c"; ctx.fillRect(i*10, 0, 7, 7); }
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+}
+
+function drawPlayer(){
+  const p = player;
+  ctx.save();
+  ctx.translate(p.x+p.w/2, p.y+p.h/2);
+  if(p.facing<0) ctx.scale(-1,1);
+
+  // squash & stretch (negative = airborne stretch, positive = landing squash)
+  const sq = p.squash || 0;
+  const scaleY = 1 - sq*0.022;
+  const scaleX = 1 + sq*0.022;
+  ctx.scale(scaleX, scaleY);
+
+  if(p.invuln>0 && Math.floor(p.invuln*20)%2===0) ctx.globalAlpha=0.35;
+
+  const running = p.state==="run";
+  const airborne = p.state==="jump" || p.state==="fall";
+  const bob = running ? Math.sin(p.frame*1.6)*3 : 0;
+  const legSwing = running ? Math.sin(p.frame*1.6)*11 : 0;
+  const armSwing = running ? Math.sin(p.frame*1.6+Math.PI)*9 : 0;
+
+  // ground shadow (shrinks while airborne)
+  const shadowScale = airborne ? 0.6 : 1;
+  ctx.save(); ctx.globalAlpha*=0.28; ctx.fillStyle="#000";
+  ctx.beginPath(); ctx.ellipse(0, p.h/2-1, p.w*0.45*shadowScale, 5*shadowScale, 0,0,7); ctx.fill(); ctx.restore();
+
+  // back leg / boot
+  ctx.fillStyle="#3f2814";
+  ctx.fillRect(-9, 6+bob*0.2, 8, 14+(airborne?5:legSwing*0.35));
+  ctx.fillStyle="#241708";
+  ctx.fillRect(-10, 17+bob*0.2+(airborne?4:legSwing*0.35), 10, 4);
+
+  // front leg / boot
+  ctx.fillStyle="#5b3a1d";
+  ctx.fillRect(1, 6+bob*0.2, 8, 14+(airborne?5:-legSwing*0.35));
+  ctx.fillStyle="#2e1c0c";
+  ctx.fillRect(0, 17+bob*0.2+(airborne?4:-legSwing*0.35), 10, 4);
+
+  // back arm (behind body, opposite swing)
+  ctx.fillStyle="#c73a26";
+  ctx.save();
+  ctx.translate(-8, -3+bob*0.3);
+  ctx.rotate((running? -armSwing : 0)*0.035);
+  ctx.fillRect(-3,0,7,13);
+  ctx.fillStyle="#ffe0b0"; ctx.beginPath(); ctx.arc(0,14,4,0,7); ctx.fill();
+  ctx.restore();
+
+  // backpack
+  ctx.fillStyle="#8a5f0a";
+  roundRect(4,-7+bob*0.3,9,16,3); ctx.fill();
+  ctx.fillStyle="#a9740a"; ctx.fillRect(6,-4+bob*0.3,5,3);
+
+  // torso (gold+red adventure outfit) with belt
+  ctx.fillStyle="#e8412c";
+  roundRect(-11,-9+bob*0.3,22,21,7); ctx.fill();
+  ctx.fillStyle="rgba(255,255,255,.14)";
+  roundRect(-11,-9+bob*0.3,10,21,7); ctx.fill();
+  ctx.fillStyle="#ffcf3f";
+  ctx.fillRect(-11,4+bob*0.3,22,5);
+  ctx.fillStyle="#a9740a";
+  ctx.fillRect(-2,4+bob*0.3,4,5);
+
+  // front arm (attack pose extends with a bright fist)
+  ctx.save();
+  ctx.translate(9,-4+bob*0.3);
+  if(p.state==="attack"){
+    ctx.fillStyle="#e8412c"; ctx.fillRect(0,0,17,7);
+    ctx.fillStyle="#ffe27a"; ctx.beginPath(); ctx.arc(19,3,5.5,0,7); ctx.fill();
+    ctx.strokeStyle="rgba(255,255,255,.6)"; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(19,-3); ctx.lineTo(24,-6); ctx.moveTo(19,3); ctx.lineTo(26,3); ctx.moveTo(19,9); ctx.lineTo(24,12); ctx.stroke();
+  } else {
+    ctx.rotate((running? armSwing : 0)*0.035);
+    ctx.fillStyle="#e8412c"; ctx.fillRect(0,0,9,7);
+    ctx.fillStyle="#ffe0b0"; ctx.beginPath(); ctx.arc(10,3.5,4,0,7); ctx.fill();
+  }
+  ctx.restore();
+
+  // neck / head
+  ctx.fillStyle="#ffd9a8";
+  ctx.beginPath(); ctx.arc(0,-17+bob*0.3, 12.5, 0, 7); ctx.fill();
+  // ear
+  ctx.beginPath(); ctx.arc(-9,-15+bob*0.3, 2.6, 0, 7); ctx.fill();
+  // sideburn / hair
+  ctx.fillStyle="#5b3a1d";
+  ctx.beginPath(); ctx.arc(-8,-13+bob*0.3,2.4,0,7); ctx.fill();
+
+  // cap with brim
+  ctx.fillStyle="#e8412c";
+  ctx.beginPath(); ctx.arc(0,-21.5+bob*0.3, 12.5, Math.PI, 0); ctx.fill();
+  ctx.fillRect(-12.5,-21.5+bob*0.3,25,3);
+  ctx.fillStyle="#c73a26";
+  roundRect(0,-15.5+bob*0.3,14,4.5,2); ctx.fill(); // brim
+  ctx.fillStyle="#ffcf3f";
+  ctx.beginPath(); ctx.arc(-2,-23+bob*0.3,4.2,0,7); ctx.fill(); // emblem
+  ctx.strokeStyle="#a9740a"; ctx.lineWidth=1; ctx.beginPath(); ctx.arc(-2,-23+bob*0.3,4.2,0,7); ctx.stroke();
+
+  // face
+  ctx.fillStyle="#222";
+  if(p.state==="hurt"){
+    ctx.lineWidth=2; ctx.strokeStyle="#222";
+    ctx.beginPath(); ctx.moveTo(2,-18+bob*0.3); ctx.lineTo(8,-15+bob*0.3);
+    ctx.moveTo(8,-18+bob*0.3); ctx.lineTo(2,-15+bob*0.3); ctx.stroke();
+  } else if(airborne){
+    ctx.beginPath(); ctx.arc(6,-17+bob*0.3,2.6,0,7); ctx.fill();
+    ctx.strokeStyle="#222"; ctx.lineWidth=1.6;
+    ctx.beginPath(); ctx.moveTo(1,-11+bob*0.3); ctx.quadraticCurveTo(4,-8+bob*0.3,7,-11+bob*0.3); ctx.stroke();
+  } else {
+    ctx.beginPath(); ctx.arc(6,-17+bob*0.3,2.4,0,7); ctx.fill();
+  }
+  // small mustache for character
+  ctx.fillStyle="#3d2410";
+  roundRect(1,-12.5+bob*0.3,9,3,1.4); ctx.fill();
+
+  ctx.restore();
+}
+
+/* ---------------- Menu wiring ---------------- */
+document.getElementById("startBtn").onclick = ()=>{ SFX.select(); startLevel("1-1"); };
+document.getElementById("worldSelectBtn").onclick = ()=>{ SFX.select(); startMusic("menu"); buildWorldGrid(); showScreen("worldSelect"); };
+document.getElementById("worldBackBtn").onclick = ()=>{ SFX.select(); startMusic("menu"); showScreen("mainMenu"); };
+document.getElementById("levelBackBtn").onclick = ()=>{ SFX.select(); startMusic("menu"); buildWorldGrid(); showScreen("worldSelect"); };
+
+document.getElementById("settingsBtn").onclick = ()=>{ SFX.select(); startMusic("menu"); openSettings(); };
+document.getElementById("settingsBackBtn").onclick = ()=>{ SFX.select(); showScreen("mainMenu"); };
+document.getElementById("pauseSettingsBtn").onclick = ()=>{ SFX.select(); openSettings(); };
+function openSettings(){
+  document.getElementById("soundToggleBtn").textContent = save.soundOn ? "🔊 Sound: ON" : "🔈 Sound: OFF";
+  showScreen("settingsScreen");
+}
+document.getElementById("soundToggleBtn").onclick = ()=>{
+  save.soundOn = !save.soundOn; persist();
+  document.getElementById("soundToggleBtn").textContent = save.soundOn ? "🔊 Sound: ON" : "🔈 Sound: OFF";
+  if(save.soundOn){ SFX.select(); startMusic(state.mode==="playing" ? state.level : "menu"); }
+  else { stopMusic(); }
+};
+document.getElementById("resetBtn").onclick = ()=>{
+  if(confirm("Reset all progress and high scores?")){
+    save = { unlocked:{"1-1":true}, completed:{}, highScore:0, soundOn:save.soundOn };
+    persist(); toast("Progress reset");
+  }
+};
+
+document.getElementById("highScoreBtn").onclick = ()=>{
+  SFX.select(); startMusic("menu");
+  document.getElementById("hsScore").textContent = save.highScore||0;
+  document.getElementById("hsLevels").textContent = Object.keys(save.completed).length;
+  showScreen("highScoreScreen");
+};
+document.getElementById("hsBackBtn").onclick = ()=>{ SFX.select(); startMusic("menu"); showScreen("mainMenu"); };
+
+document.getElementById("resumeBtn").onclick = ()=>{ SFX.select(); resumeGame(); };
+document.getElementById("restartBtn").onclick = ()=>{ SFX.select(); startLevel(state.level); };
+document.getElementById("pauseMenuBtn").onclick = ()=>{ SFX.select(); backToMenu(); };
+
+document.getElementById("nextLevelBtn").onclick = ()=>{
+  SFX.select();
+  if(state.nextLevelId){
+    startLevel(state.nextLevelId);
+  } else {
+    const wasTrueFinal = state.level === FINAL_LEVEL_ID;
+    toast(wasTrueFinal ? "🏆 All 20 worlds complete! You are legendary!" : "More levels coming soon!");
+    backToMenu();
+  }
+};
+document.getElementById("lcMenuBtn").onclick = ()=>{ SFX.select(); backToMenu(); };
+document.getElementById("tryAgainBtn").onclick = ()=>{ SFX.select(); startLevel(state.level); };
+document.getElementById("goMenuBtn").onclick = ()=>{ SFX.select(); backToMenu(); };
+document.getElementById("vMenuBtn").onclick = ()=>{ SFX.select(); backToMenu(); };
+
+function backToMenu(){
+  state.mode = "menu";
+  setPlayingUI(false);
+  world = null;
+  particles = [];
+  showScreen("mainMenu");
+  startMusic("menu");
+}
+
+showScreen("mainMenu");
+startMusic("menu");
+
+})();
+
+</script>
+</body>
+</html>
